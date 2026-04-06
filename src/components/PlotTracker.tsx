@@ -3810,7 +3810,7 @@ export function PlotTracker({
         !isTasksOpen &&
         !isAddTaskPageOpen &&
         !isCopyPlotOpen && (
-          <div className="fixed bottom-[196px] left-1/2 -translate-x-1/2 z-50">
+          <div className="fixed bottom-[104px] sm:bottom-[196px] left-1/2 -translate-x-1/2 z-50">
             <div className="inline-flex items-center bg-white border border-slate-200 rounded-lg p-1 gap-1 shadow-lg mx-[0px] my-[16px]">
               <Button
                 variant="ghost"
