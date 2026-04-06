@@ -11,6 +11,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("analytics");
   const [region, setRegion] = useState("all");
   const [season, setSeason] = useState("current");
+  const [role, setRole] = useState("FDO");
   const [advisoryFilter, setAdvisoryFilter] = useState<string | undefined>(
     undefined,
   );
@@ -18,6 +19,7 @@ export default function App() {
     "all" | "audited" | "pending"
   >("all");
   const [plotStageFilter, setPlotStageFilter] = useState<string>("all");
+  const [plotStatusFilter, setPlotStatusFilter] = useState<string>("all");
   const [currentTime, setCurrentTime] = useState<string>("");
 
   useEffect(() => {
@@ -43,9 +45,15 @@ export default function App() {
       case "analytics":
         return (
           <Analytics
-            onNavigateToPlots={(filter = "all", stageFilter = "all") => {
+            role={role}
+            onNavigateToPlots={(
+              filter = "all",
+              stageFilter = "all",
+              statusFilter = "all",
+            ) => {
               setPlotAuditFilter(filter);
               setPlotStageFilter(stageFilter);
+              setPlotStatusFilter(statusFilter);
               setActiveTab("plots");
             }}
             onNavigateToAdvisory={(filter) => {
@@ -60,8 +68,10 @@ export default function App() {
       case "plots":
         return (
           <PlotTracker
+            role={role}
             initialAuditFilter={plotAuditFilter}
             initialStageFilter={plotStageFilter}
+            initialStatusFilter={plotStatusFilter}
             selectedRegion={region}
           />
         );
@@ -79,9 +89,15 @@ export default function App() {
       default:
         return (
           <Analytics
-            onNavigateToPlots={(filter = "all", stageFilter = "all") => {
+            role={role}
+            onNavigateToPlots={(
+              filter = "all",
+              stageFilter = "all",
+              statusFilter = "all",
+            ) => {
               setPlotAuditFilter(filter);
               setPlotStageFilter(stageFilter);
+              setPlotStatusFilter(statusFilter);
               setActiveTab("plots");
             }}
             onNavigateToAdvisory={(filter) => {
@@ -133,6 +149,7 @@ export default function App() {
                 if (tab !== "plots") {
                   setPlotAuditFilter("all");
                   setPlotStageFilter("all");
+                  setPlotStatusFilter("all");
                 }
                 setActiveTab(tab);
               }}
@@ -140,6 +157,8 @@ export default function App() {
               season={season}
               onRegionChange={setRegion}
               onSeasonChange={setSeason}
+              role={role}
+              onRoleChange={setRole}
             >
               {renderContent()}
             </Layout>

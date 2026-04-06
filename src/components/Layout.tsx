@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  BarChart3,
+  Home,
   MapIcon,
   Users,
   ClipboardList,
@@ -41,10 +41,12 @@ interface LayoutProps {
   season: string;
   onRegionChange: (region: string) => void;
   onSeasonChange: (season: string) => void;
+  role: string;
+  onRoleChange: (role: string) => void;
 }
 
 const NAV_ITEMS = [
-  { label: "Analytics", icon: BarChart3, id: "analytics" },
+  { label: "Home", icon: Home, id: "analytics" },
   { label: "Growers", icon: Users, id: "growers" },
   { label: "Fields", icon: MapIcon, id: "plots" },
   { label: "Advisory Tasks", icon: ClipboardList, id: "advisory" },
@@ -59,9 +61,10 @@ export function Layout({
   season,
   onRegionChange,
   onSeasonChange,
+  role,
+  onRoleChange,
 }: LayoutProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [role, setRole] = useState("FDO");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [hybridType, setHybridType] = useState("all");
   const [filterUnit, setFilterUnit] = useState("all");
@@ -78,7 +81,7 @@ export function Layout({
         : ["unit", "territory", "location", "block", "village"]; // Unit Lead
 
   const handleRoleChange = (newRole: string) => {
-    setRole(newRole);
+    onRoleChange(newRole);
     const newVisible =
       newRole === "FDO"
         ? ["village"]

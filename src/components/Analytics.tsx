@@ -8,20 +8,14 @@ import {
   Flower,
   Combine,
   Truck,
-  Plus,
   TriangleAlert,
   Clock,
+  Calendar,
   Filter,
+  AlertCircle,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetTitle,
-  SheetDescription,
-} from "./ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "./ui/sheet";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
 import {
   Select,
   SelectContent,
@@ -34,764 +28,956 @@ interface AnalyticsProps {
   onNavigateToPlots?: (
     auditFilter?: "all" | "audited" | "pending",
     stageFilter?: string,
+    statusFilter?: string,
   ) => void;
   onNavigateToAdvisory?: (status: string) => void;
   onNavigateToGrowers?: () => void;
-}
-
-interface KPICard {
-  id: string;
-  value: number | string;
-  unit?: string;
-  label: string;
-  icon: React.ReactNode;
-  backgroundColor: string;
-  borderColor: string;
-  shadowColor: string;
-  iconBgColor: string;
-  iconColor: string;
-  textColor: string;
-  unitColor?: string;
-  subtitle?: string;
-  subtitleColor?: string;
-  onCard?: boolean;
-  borderAccent?: string;
-  onClick?: () => void;
-  acreage?: number; // Acreage value
-  expectedYield?: number; // Expected yield in KG
-  hideExpectedYield?: boolean; // For Vegetative stage
+  role?: string;
 }
 
 export function Analytics({
   onNavigateToPlots,
   onNavigateToAdvisory,
   onNavigateToGrowers,
+  role = "FDO",
 }: AnalyticsProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [hybridType, setHybridType] = useState("all");
+  const [filterUnit, setFilterUnit] = useState("all");
+  const [filterLocation, setFilterLocation] = useState("all");
   const [filterVillage, setFilterVillage] = useState("all");
 
-  const activeFilterCount = [hybridType, filterVillage].filter(
-    (v) => v !== "all",
-  ).length;
+  const visibleFilters =
+    role === "FDO"
+      ? ["hybrid", "village"]
+      : role === "Territory Manager"
+        ? ["hybrid", "location", "village"]
+        : ["hybrid", "unit", "location", "village"]; // Unit Lead
 
-  // Mock Data for KPIs
-  const highlightCards: KPICard[] = [
-    {
-      id: "growers",
-      value: 33,
-      label: "No. of Growers",
-      icon: <Users className="w-5 h-5" />,
-      backgroundColor: "#FFF8DC",
-      borderColor: "#EAC117",
-      shadowColor: "#DA A520",
-      iconBgColor: "#FCEABB",
-      iconColor: "#B8860B",
-      textColor: "#5C4300",
-      onClick: () => onNavigateToGrowers?.(),
-    },
-    {
-      id: "no-of-fields",
-      value: 124,
-      label: "No. of Fields",
-      icon: <Grid className="w-5 h-5" />,
-      backgroundColor: "#FFF8DC",
-      borderColor: "#EAC117",
-      shadowColor: "#DAA520",
-      iconBgColor: "#FCEABB",
-      iconColor: "#B8860B",
-      textColor: "#5C4300",
-      onClick: () => onNavigateToPlots?.("all"),
-    },
-    {
-      id: "measured-acre",
-      value: "847.5",
-      label: "Measured Acre",
-      icon: <Ruler className="w-5 h-5" />,
-      backgroundColor: "#FFF8DC",
-      borderColor: "#EAC117",
-      shadowColor: "#DAA520",
-      iconBgColor: "#FCEABB",
-      iconColor: "#B8860B",
-      textColor: "#5C4300",
-      onClick: () => onNavigateToPlots?.("audited"),
-    },
-  ];
+  const activeFilterCount = [
+    hybridType !== "all" ? 1 : 0,
+    visibleFilters.includes("unit") && filterUnit !== "all" ? 1 : 0,
+    visibleFilters.includes("location") && filterLocation !== "all" ? 1 : 0,
+    visibleFilters.includes("village") && filterVillage !== "all" ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
 
-  const cropStageCards: KPICard[] = [
+  // Crop stage data with field counts and status breakdown
+  const stageData = [
     {
-      id: "sown-acreage",
-      acreage: 145,
-      label: "Sown Acreage",
-      icon: <Sprout className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#e8f5e9",
+      id: "sowing",
+      label: "Sowing",
+      icon: <Sprout style={{ width: "15px", height: "15px" }} />,
+      acreageLabel: "Sown Acre",
+      acreage: 140,
+      fieldCount: 32,
+      inProgress: 12,
+      notYetStarted: 10,
+      completed: 10,
+      expectedYield: null as number | null,
+      iconBg: "#e8f5e9",
       iconColor: "#2e7d32",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      onClick: () => {},
-      value: 0, // Placeholder
     },
     {
       id: "vegetative",
-      acreage: 67.5,
-      expectedYield: 89000, // 89 T converted to KG
       label: "Vegetative / Transplanting",
-      icon: <Leaf className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#e8f5e9",
+      icon: <Leaf style={{ width: "15px", height: "15px" }} />,
+      acreageLabel: "Standing Acre",
+      acreage: 67.5,
+      fieldCount: 18,
+      inProgress: 8,
+      notYetStarted: 5,
+      completed: 5,
+      expectedYield: null as number | null,
+      iconBg: "#e8f5e9",
       iconColor: "#2e7d32",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      hideExpectedYield: true, // Hide expected yield for vegetative
-      onClick: () => onNavigateToPlots?.("all", "Vegetative"),
-      value: 0, // Placeholder
     },
     {
       id: "flowering",
+      label: "Flowering",
+      icon: <Flower style={{ width: "15px", height: "15px" }} />,
+      acreageLabel: "Standing Acre",
       acreage: 98.2,
-      expectedYield: 120000, // 120 T converted to KG
-      label: "Flowering Stage",
-      icon: <Flower className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#f1f8e9",
+      fieldCount: 28,
+      inProgress: 10,
+      notYetStarted: 8,
+      completed: 10,
+      expectedYield: 120,
+      iconBg: "#f1f8e9",
       iconColor: "#558b2f",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      onClick: () => onNavigateToPlots?.("all", "Flowering"),
-      value: 0, // Placeholder
     },
     {
       id: "harvest",
+      label: "Harvest",
+      icon: <Combine style={{ width: "15px", height: "15px" }} />,
+      acreageLabel: "Harvested Acre",
       acreage: 112.3,
-      expectedYield: 156000, // 156 T converted to KG
-      label: "Harvest Stage",
-      icon: <Combine className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#e8f5e9",
+      fieldCount: 30,
+      inProgress: 12,
+      notYetStarted: 8,
+      completed: 10,
+      expectedYield: 156,
+      iconBg: "#e8f5e9",
       iconColor: "#33691e",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      onClick: () => onNavigateToPlots?.("all", "Harvest"),
-      value: 0, // Placeholder
     },
     {
       id: "dispatch",
+      label: "Dispatch",
+      icon: <Truck style={{ width: "15px", height: "15px" }} />,
+      acreageLabel: "Dispatched Acre",
       acreage: 45.8,
-      expectedYield: 34200, // Already in KG
-      label: "Dispatch Stage",
-      icon: <Truck className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#e0f2f1",
+      fieldCount: 16,
+      inProgress: 6,
+      notYetStarted: 4,
+      completed: 6,
+      expectedYield: 34.2,
+      iconBg: "#e0f2f1",
       iconColor: "#00695c",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      onClick: () => {},
-      value: 0, // Placeholder
     },
   ];
-
-  const alertCards: KPICard[] = [
-    {
-      id: "pre-sowing-fields",
-      value: 12,
-      unit: "Fields",
-      label: "Fields pending measurement",
-      icon: <Plus className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#fff3e0",
-      iconColor: "#e65100",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      onClick: () => onNavigateToPlots?.("pending"),
-    },
-    {
-      id: "pending-tasks",
-      value: 28,
-      unit: "Tasks",
-      label: "Pending Tasks",
-      icon: <TriangleAlert className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#fff3e0",
-      iconColor: "#e65100",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      borderAccent: "#ff9800",
-      onClick: () => onNavigateToAdvisory?.("Pending"),
-    },
-    {
-      id: "overdue-tasks",
-      value: 3,
-      unit: "Tasks",
-      label: "Overdue Tasks",
-      icon: <Clock className="w-5 h-5" />,
-      backgroundColor: "#fff",
-      borderColor: "#e5e7eb",
-      shadowColor: "rgba(0,0,0,0.08)",
-      iconBgColor: "#fce4ec",
-      iconColor: "#c62828",
-      textColor: "#1a1a1a",
-      unitColor: "#888",
-      borderAccent: "#ef5350",
-      onClick: () => onNavigateToAdvisory?.("Overdue"),
-    },
-  ];
-
-  // Render KPI Card Component
-  const renderKPICard = (card: KPICard) => (
-    <div
-      key={card.id}
-      onClick={card.onClick}
-      style={{
-        backgroundColor: card.backgroundColor,
-        borderColor: card.borderColor,
-        border: `1.5px solid ${card.borderColor}`,
-        borderRadius: "10px",
-        boxShadow: `0 1px 4px ${card.shadowColor.includes("rgba") ? card.shadowColor : `rgba(218, 165, 32, 0.2)`}`,
-        padding: "10px",
-        cursor: "pointer",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "flex-start",
-        gap: "6px",
-        transition: "transform 0.2s ease-in-out",
-        flex: 1,
-      }}
-      onMouseDown={(e) => {
-        if (e.currentTarget.style.transform !== undefined) {
-          e.currentTarget.style.transform = "scale(0.95)";
-        }
-      }}
-      onMouseUp={(e) => {
-        if (e.currentTarget.style.transform !== undefined) {
-          e.currentTarget.style.transform = "scale(1)";
-        }
-      }}
-    >
-      {/* Icon + Label Row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          width: "100%",
-        }}
-      >
-        {/* Icon Container */}
-        <div
-          style={{
-            backgroundColor: card.iconBgColor,
-            borderRadius: "6px",
-            width: "24px",
-            height: "24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            color: card.iconColor,
-            flexShrink: 0,
-          }}
-        >
-          {card.icon}
-        </div>
-
-        {/* Label - Next to Icon */}
-        <p
-          style={{
-            fontSize: "11px",
-            fontWeight: 700,
-            color: card.textColor,
-            margin: 0,
-            lineHeight: "1.2",
-            flex: 1,
-          }}
-        >
-          {card.label}
-        </p>
-      </div>
-
-      {/* Value and Unit */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          gap: "4px",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "20px",
-            fontWeight: 900,
-            color: card.textColor,
-          }}
-        >
-          {typeof card.value === "string"
-            ? card.value
-            : card.value.toLocaleString()}
-        </span>
-        {card.unit && (
-          <span style={{ fontSize: "10px", color: card.unitColor || "#888" }}>
-            {card.unit}
-          </span>
-        )}
-      </div>
-
-      {/* Subtitle */}
-      {card.subtitle && (
-        <p
-          style={{
-            fontSize: "9px",
-            fontWeight: 600,
-            color: card.subtitleColor,
-            margin: 0,
-            marginTop: "2px",
-          }}
-        >
-          {card.subtitle}
-        </p>
-      )}
-    </div>
-  );
 
   return (
     <div
       style={{
         backgroundColor: "#f5f5f5",
-        padding: "6px 10px",
+        padding: "8px 10px",
         display: "flex",
         flexDirection: "column",
-        gap: "4px",
+        gap: "0px",
         overflowY: "auto",
         height: "100%",
       }}
     >
-      {/* Section 1: Page Title with Filter */}
+      {/* Page Header */}
       <div
         style={{
-          marginBottom: "8px",
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
+          alignItems: "center",
+          marginBottom: "10px",
         }}
       >
         <div>
           <h2
             style={{
               color: "#1a1a1a",
-              fontSize: "14px",
+              fontSize: "15px",
               fontWeight: 800,
               margin: 0,
             }}
           >
-            Analytics
+            Home
           </h2>
           <p style={{ color: "#888", fontSize: "9px", margin: "2px 0 0 0" }}>
-            Field operation kpi scorecards.
+            Field operation KPI scorecards
           </p>
         </div>
-        <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" size="sm" className="h-8 gap-2">
-              <Filter className="h-4 w-4" />
-              {activeFilterCount > 0 && (
-                <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
-                  {activeFilterCount}
-                </Badge>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent
-            side="bottom"
-            className="rounded-t-2xl max-h-[85vh] p-0 overflow-hidden flex flex-col"
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "5px",
+            padding: "6px 12px",
+            borderRadius: "8px",
+            border: "1.5px solid #e2e8f0",
+            background: "white",
+            cursor: "pointer",
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "#374151",
+            boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+          }}
+        >
+          <Filter style={{ width: "12px", height: "12px" }} />
+          Filter
+          {activeFilterCount > 0 && (
+            <span
+              style={{
+                background: "#4CAF50",
+                color: "white",
+                borderRadius: "10px",
+                padding: "0 5px",
+                fontSize: "9px",
+                fontWeight: 700,
+              }}
+            >
+              {activeFilterCount}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* ── ALERTS SECTION ── */}
+      <div
+        style={{
+          color: "#c0392b",
+          fontSize: "8px",
+          fontWeight: 700,
+          letterSpacing: "1.2px",
+          marginBottom: "6px",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px",
+        }}
+      >
+        <AlertCircle style={{ width: "10px", height: "10px" }} />
+        ALERTS
+      </div>
+      <div style={{ display: "flex", gap: "5px", marginBottom: "14px" }}>
+        {/* Overdue */}
+        <div
+          onClick={() => onNavigateToAdvisory?.("Overdue")}
+          style={{
+            flex: 1,
+            backgroundColor: "#fff",
+            border: "1.5px solid #ef5350",
+            borderLeft: "3px solid #ef5350",
+            borderRadius: "10px",
+            padding: "8px 8px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <div
+              style={{
+                background: "#fce4ec",
+                borderRadius: "5px",
+                padding: "3px",
+                display: "flex",
+              }}
+            >
+              <TriangleAlert
+                style={{ width: "11px", height: "11px", color: "#c62828" }}
+              />
+            </div>
+            <span
+              style={{ fontSize: "9px", fontWeight: 700, color: "#1a1a1a" }}
+            >
+              Overdue
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 900,
+              color: "#c62828",
+              lineHeight: 1,
+            }}
           >
-            <div className="px-5 py-4 border-b bg-white flex items-center justify-between flex-shrink-0">
-              <SheetTitle className="text-base font-semibold text-slate-900">
-                Filters
-              </SheetTitle>
-              {activeFilterCount > 0 && (
-                <button
-                  onClick={() => {
-                    setHybridType("all");
-                    setFilterVillage("all");
-                  }}
-                  className="text-xs text-[#4CAF50] font-semibold"
-                >
-                  Reset All
-                </button>
-              )}
-              <SheetDescription className="sr-only">
-                Filter Analytics data
-              </SheetDescription>
-            </div>
-            <div className="flex-1 overflow-y-auto px-5 py-4">
-              <div className="space-y-4">
-                {/* Hybrid Type Filter */}
-                <div>
-                  <label className="text-sm font-semibold text-slate-900 mb-2 block">
-                    Hybrid Type
-                  </label>
-                  <Select value={hybridType} onValueChange={setHybridType}>
-                    <SelectTrigger className="h-10 bg-white border-slate-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Hybrids</SelectItem>
-                      <SelectItem value="hybrid1">Hybrid 1</SelectItem>
-                      <SelectItem value="hybrid2">Hybrid 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            3
+          </span>
+          <span style={{ fontSize: "8px", color: "#888" }}>Tasks</span>
+        </div>
 
-                {/* Village Filter */}
-                <div>
-                  <label className="text-sm font-semibold text-slate-900 mb-2 block">
-                    Village
-                  </label>
-                  <Select
-                    value={filterVillage}
-                    onValueChange={setFilterVillage}
-                  >
-                    <SelectTrigger className="h-10 bg-white border-slate-300">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Villages</SelectItem>
-                      <SelectItem value="village1">Village 1</SelectItem>
-                      <SelectItem value="village2">Village 2</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+        {/* Today */}
+        <div
+          onClick={() => onNavigateToAdvisory?.("Today")}
+          style={{
+            flex: 1,
+            backgroundColor: "#fff",
+            border: "1.5px solid #ff9800",
+            borderLeft: "3px solid #ff9800",
+            borderRadius: "10px",
+            padding: "8px 8px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <div
+              style={{
+                background: "#fff3e0",
+                borderRadius: "5px",
+                padding: "3px",
+                display: "flex",
+              }}
+            >
+              <Calendar
+                style={{ width: "11px", height: "11px", color: "#e65100" }}
+              />
             </div>
-          </SheetContent>
-        </Sheet>
+            <span
+              style={{ fontSize: "9px", fontWeight: 700, color: "#1a1a1a" }}
+            >
+              Today
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 900,
+              color: "#e65100",
+              lineHeight: 1,
+            }}
+          >
+            7
+          </span>
+          <span style={{ fontSize: "8px", color: "#888" }}>Tasks</span>
+        </div>
+
+        {/* Upcoming */}
+        <div
+          onClick={() => onNavigateToAdvisory?.("Upcoming")}
+          style={{
+            flex: 1,
+            backgroundColor: "#fff",
+            border: "1.5px solid #4CAF50",
+            borderLeft: "3px solid #4CAF50",
+            borderRadius: "10px",
+            padding: "8px 8px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+            <div
+              style={{
+                background: "#e8f5e9",
+                borderRadius: "5px",
+                padding: "3px",
+                display: "flex",
+              }}
+            >
+              <Clock
+                style={{ width: "11px", height: "11px", color: "#2e7d32" }}
+              />
+            </div>
+            <span
+              style={{ fontSize: "9px", fontWeight: 700, color: "#1a1a1a" }}
+            >
+              Upcoming
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: "24px",
+              fontWeight: 900,
+              color: "#2e7d32",
+              lineHeight: 1,
+            }}
+          >
+            18
+          </span>
+          <span style={{ fontSize: "8px", color: "#888" }}>Tasks</span>
+        </div>
       </div>
 
-      {/* Section 2: Top Row - 3 Yellow Highlight Cards */}
-      <div style={{ display: "flex", gap: "6px", marginBottom: "12px" }}>
-        {highlightCards.map((card) => renderKPICard(card))}
-      </div>
-
-      {/* Section 3: CROP STAGES Header */}
+      {/* ── MY PORTFOLIO SECTION ── */}
       <div
         style={{
           color: "#2e7d32",
           fontSize: "8px",
           fontWeight: 700,
-          letterSpacing: "1px",
+          letterSpacing: "1.2px",
+          marginBottom: "6px",
+        }}
+      >
+        MY PORTFOLIO
+      </div>
+      <div style={{ display: "flex", gap: "4px", marginBottom: "14px" }}>
+        {/* Total Growers Assigned */}
+        <div
+          onClick={() => onNavigateToGrowers?.()}
+          style={{
+            flex: 1,
+            backgroundColor: "#FFF8DC",
+            border: "1.5px solid #EAC117",
+            borderRadius: "10px",
+            padding: "8px 5px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+            alignItems: "flex-start",
+          }}
+        >
+          <div
+            style={{
+              background: "#FCEABB",
+              borderRadius: "5px",
+              padding: "3px",
+              display: "flex",
+            }}
+          >
+            <Users
+              style={{ width: "11px", height: "11px", color: "#B8860B" }}
+            />
+          </div>
+          <span
+            style={{
+              fontSize: "20px",
+              fontWeight: 900,
+              color: "#5C4300",
+              lineHeight: 1,
+            }}
+          >
+            33
+          </span>
+          <span
+            style={{
+              fontSize: "8px",
+              fontWeight: 700,
+              color: "#5C4300",
+              lineHeight: 1.2,
+            }}
+          >
+            Total Growers
+          </span>
+        </div>
+
+        {/* Total Fields Assigned */}
+        <div
+          onClick={() => onNavigateToPlots?.("all")}
+          style={{
+            flex: 1,
+            backgroundColor: "#FFF8DC",
+            border: "1.5px solid #EAC117",
+            borderRadius: "10px",
+            padding: "8px 5px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+            alignItems: "flex-start",
+          }}
+        >
+          <div
+            style={{
+              background: "#FCEABB",
+              borderRadius: "5px",
+              padding: "3px",
+              display: "flex",
+            }}
+          >
+            <Grid style={{ width: "11px", height: "11px", color: "#B8860B" }} />
+          </div>
+          <span
+            style={{
+              fontSize: "20px",
+              fontWeight: 900,
+              color: "#5C4300",
+              lineHeight: 1,
+            }}
+          >
+            124
+          </span>
+          <span
+            style={{
+              fontSize: "8px",
+              fontWeight: 700,
+              color: "#5C4300",
+              lineHeight: 1.2,
+            }}
+          >
+            Total Fields
+          </span>
+        </div>
+
+        {/* Total Fields Measured */}
+        <div
+          onClick={() => onNavigateToPlots?.("audited")}
+          style={{
+            flex: 1,
+            backgroundColor: "#FFF8DC",
+            border: "1.5px solid #EAC117",
+            borderRadius: "10px",
+            padding: "8px 5px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+            alignItems: "flex-start",
+          }}
+        >
+          <div
+            style={{
+              background: "#FCEABB",
+              borderRadius: "5px",
+              padding: "3px",
+              display: "flex",
+            }}
+          >
+            <Ruler
+              style={{ width: "11px", height: "11px", color: "#B8860B" }}
+            />
+          </div>
+          <span
+            style={{
+              fontSize: "20px",
+              fontWeight: 900,
+              color: "#5C4300",
+              lineHeight: 1,
+            }}
+          >
+            87
+          </span>
+          <span
+            style={{
+              fontSize: "8px",
+              fontWeight: 700,
+              color: "#5C4300",
+              lineHeight: 1.2,
+            }}
+          >
+            Fields Measured
+          </span>
+        </div>
+
+        {/* Measured Acre */}
+        <div
+          onClick={() => onNavigateToPlots?.("audited")}
+          style={{
+            flex: 1,
+            backgroundColor: "#FFF8DC",
+            border: "1.5px solid #EAC117",
+            borderRadius: "10px",
+            padding: "8px 5px",
+            cursor: "pointer",
+            display: "flex",
+            flexDirection: "column",
+            gap: "3px",
+            alignItems: "flex-start",
+          }}
+        >
+          <div
+            style={{
+              background: "#FCEABB",
+              borderRadius: "5px",
+              padding: "3px",
+              display: "flex",
+            }}
+          >
+            <Ruler
+              style={{ width: "11px", height: "11px", color: "#B8860B" }}
+            />
+          </div>
+          <span
+            style={{
+              fontSize: "20px",
+              fontWeight: 900,
+              color: "#5C4300",
+              lineHeight: 1,
+            }}
+          >
+            847
+          </span>
+          <span
+            style={{
+              fontSize: "8px",
+              fontWeight: 700,
+              color: "#5C4300",
+              lineHeight: 1.2,
+            }}
+          >
+            Measured Acre
+          </span>
+        </div>
+      </div>
+
+      {/* ── CROP STAGES SECTION ── */}
+      <div
+        style={{
+          color: "#2e7d32",
+          fontSize: "8px",
+          fontWeight: 700,
+          letterSpacing: "1.2px",
           marginBottom: "8px",
-          marginTop: "4px",
         }}
       >
         CROP STAGES
       </div>
-
-      {/* Section 4: Crop Stage Cards - 2 Column Grid */}
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "5px",
-          marginBottom: "12px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
+          marginBottom: "20px",
         }}
       >
-        {cropStageCards.map((card) => (
-          <div
-            key={card.id}
-            onClick={card.onClick}
-            style={{
-              backgroundColor: card.backgroundColor,
-              borderRadius: "10px",
-              padding: "8px 10px",
-              boxShadow: `0 1px 3px rgba(0,0,0,0.08)`,
-              cursor: "pointer",
-              border: `1px solid ${card.borderColor}`,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              gap: "4px",
-              transition: "transform 0.2s ease-in-out",
-            }}
-            onMouseDown={(e) => {
-              if (e.currentTarget.style.transform !== undefined) {
-                e.currentTarget.style.transform = "scale(0.98)";
-              }
-            }}
-            onMouseUp={(e) => {
-              if (e.currentTarget.style.transform !== undefined) {
-                e.currentTarget.style.transform = "scale(1)";
-              }
-            }}
-          >
-            {/* Icon + Label Row */}
+        {stageData.map((stage) => {
+          const stageKey = stage.label.split(" /")[0].split(" ")[0];
+          return (
             <div
+              key={stage.id}
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
+                backgroundColor: "#fff",
+                borderRadius: "12px",
+                padding: "12px 12px",
+                border: "1px solid #e5e7eb",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
                 width: "100%",
               }}
             >
-              {/* Icon Container */}
+              {/* Stage Header */}
               <div
                 style={{
-                  backgroundColor: card.iconBgColor,
-                  borderRadius: "6px",
-                  width: "24px",
-                  height: "24px",
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  color: card.iconColor,
-                  flexShrink: 0,
+                  gap: "8px",
+                  marginBottom: "8px",
                 }}
               >
-                {card.icon}
-              </div>
-
-              {/* Label - Next to Icon */}
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: card.textColor,
-                  margin: 0,
-                  lineHeight: "1.2",
-                  flex: 1,
-                }}
-              >
-                {card.label}
-              </p>
-            </div>
-
-            {/* Acreage - Larger font, on top */}
-            {card.acreage !== undefined && (
-              <div
-                style={{ display: "flex", alignItems: "baseline", gap: "2px" }}
-              >
-                <span
-                  style={{
-                    fontSize: "20px",
-                    fontWeight: 900,
-                    color: card.textColor,
-                  }}
-                >
-                  {card.acreage.toLocaleString()}
-                </span>
-                <span style={{ fontSize: "10px", color: card.unitColor }}>
-                  Acre
-                </span>
-              </div>
-            )}
-
-            {/* Expected Yield - Smaller font, below (only if not hidden) */}
-            {card.expectedYield !== undefined && !card.hideExpectedYield && (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: "1px" }}
-              >
-                <span
-                  style={{
-                    fontSize: "7px",
-                    color: card.unitColor,
-                    fontWeight: 500,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                  }}
-                >
-                  Expected Yield
-                </span>
                 <div
                   style={{
+                    backgroundColor: stage.iconBg,
+                    borderRadius: "6px",
+                    width: "28px",
+                    height: "28px",
                     display: "flex",
-                    alignItems: "baseline",
-                    gap: "2px",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: stage.iconColor,
+                    flexShrink: 0,
                   }}
                 >
-                  <span
+                  {stage.icon}
+                </div>
+                <span
+                  style={{
+                    fontSize: "13px",
+                    fontWeight: 800,
+                    color: "#1a1a1a",
+                  }}
+                >
+                  {stage.label}
+                </span>
+              </div>
+
+              {/* Acreage + Field Count */}
+              <div
+                style={{
+                  marginBottom: "10px",
+                  display: "flex",
+                  alignItems: "baseline",
+                  flexWrap: "wrap",
+                  gap: "2px",
+                }}
+              >
+                <span
+                  style={{ fontSize: "10px", color: "#555", fontWeight: 600 }}
+                >
+                  {stage.acreageLabel}:{" "}
+                </span>
+                <span
+                  style={{
+                    fontSize: "24px",
+                    fontWeight: 900,
+                    color: "#1a1a1a",
+                    lineHeight: 1,
+                  }}
+                >
+                  {stage.acreage}
+                </span>
+                <span style={{ fontSize: "10px", color: "#666" }}>
+                  {" "}
+                  acres across{" "}
+                </span>
+                <span
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 800,
+                    color: "#2e7d32",
+                    lineHeight: 1,
+                  }}
+                >
+                  {stage.fieldCount}
+                </span>
+                <span style={{ fontSize: "10px", color: "#666" }}> Fields</span>
+              </div>
+
+              {/* Status Pills */}
+              <div style={{ display: "flex", gap: "5px" }}>
+                {/* In Progress */}
+                <div
+                  onClick={() =>
+                    onNavigateToPlots?.("all", stageKey, "In Progress")
+                  }
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#fff8e1",
+                    border: "1px solid #fbbf24",
+                    borderRadius: "8px",
+                    padding: "7px 4px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
                     style={{
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      color: card.textColor,
+                      fontSize: "20px",
+                      fontWeight: 900,
+                      color: "#d97706",
+                      lineHeight: 1,
                     }}
                   >
-                    {(card.expectedYield / 1000).toLocaleString()}
-                  </span>
+                    {stage.inProgress}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "8px",
+                      fontWeight: 600,
+                      color: "#92400e",
+                      lineHeight: 1.3,
+                      marginTop: "2px",
+                    }}
+                  >
+                    In Progress
+                  </div>
+                </div>
+
+                {/* Not Yet Started */}
+                <div
+                  onClick={() =>
+                    onNavigateToPlots?.("all", stageKey, "Not Yet Started")
+                  }
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#f8fafc",
+                    border: "1px solid #cbd5e1",
+                    borderRadius: "8px",
+                    padding: "7px 4px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 900,
+                      color: "#475569",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {stage.notYetStarted}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "8px",
+                      fontWeight: 600,
+                      color: "#475569",
+                      lineHeight: 1.3,
+                      marginTop: "2px",
+                    }}
+                  >
+                    Not Started
+                  </div>
+                </div>
+
+                {/* Completed */}
+                <div
+                  onClick={() =>
+                    onNavigateToPlots?.("all", stageKey, "Completed")
+                  }
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#f0fdf4",
+                    border: "1px solid #4CAF50",
+                    borderRadius: "8px",
+                    padding: "7px 4px",
+                    cursor: "pointer",
+                    textAlign: "center",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "20px",
+                      fontWeight: 900,
+                      color: "#16a34a",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {stage.completed}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "8px",
+                      fontWeight: 600,
+                      color: "#166534",
+                      lineHeight: 1.3,
+                      marginTop: "2px",
+                    }}
+                  >
+                    Completed
+                  </div>
+                </div>
+              </div>
+
+              {/* Expected Yield */}
+              {stage.expectedYield !== null && (
+                <div
+                  style={{
+                    marginTop: "10px",
+                    paddingTop: "8px",
+                    borderTop: "1px solid #f0f0f0",
+                    display: "flex",
+                    alignItems: "baseline",
+                    gap: "4px",
+                  }}
+                >
                   <span
                     style={{
                       fontSize: "9px",
-                      color: card.unitColor,
-                      fontWeight: 500,
+                      color: "#888",
+                      fontWeight: 600,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
                     }}
+                  >
+                    Expected Yield:
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "18px",
+                      fontWeight: 800,
+                      color: "#1a1a1a",
+                      lineHeight: 1,
+                    }}
+                  >
+                    {stage.expectedYield}
+                  </span>
+                  <span
+                    style={{ fontSize: "10px", color: "#666", fontWeight: 500 }}
                   >
                     KG
                   </span>
                 </div>
-              </div>
-            )}
-
-            {/* Subtitle */}
-            {card.subtitle && (
-              <p
-                style={{
-                  fontSize: "8px",
-                  fontWeight: 500,
-                  color: card.subtitleColor,
-                  margin: 0,
-                }}
-              >
-                {card.subtitle}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {/* Section 5: ALERTS Header */}
-      <div
-        style={{
-          color: "#2e7d32",
-          fontSize: "8px",
-          fontWeight: 700,
-          letterSpacing: "1px",
-          marginBottom: "8px",
-          marginTop: "4px",
-        }}
-      >
-        ALERTS
-      </div>
-
-      {/* Section 6: Alert Cards - 2 Column Grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "5px",
-          marginBottom: "16px",
-        }}
-      >
-        {alertCards.map((card) => (
-          <div
-            key={card.id}
-            onClick={card.onClick}
-            style={{
-              backgroundColor: card.backgroundColor,
-              borderRadius: "10px",
-              padding: "8px 10px",
-              boxShadow: `0 1px 3px rgba(0,0,0,0.08)`,
-              cursor: "pointer",
-              border: `1px solid ${card.borderColor}`,
-              borderLeft: card.borderAccent
-                ? `3px solid ${card.borderAccent}`
-                : `1px solid ${card.borderColor}`,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "flex-start",
-              gap: "4px",
-              transition: "transform 0.2s ease-in-out",
-            }}
-            onMouseDown={(e) => {
-              if (e.currentTarget.style.transform !== undefined) {
-                e.currentTarget.style.transform = "scale(0.98)";
-              }
-            }}
-            onMouseUp={(e) => {
-              if (e.currentTarget.style.transform !== undefined) {
-                e.currentTarget.style.transform = "scale(1)";
-              }
-            }}
-          >
-            {/* Icon + Label Row */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                width: "100%",
-              }}
-            >
-              {/* Icon Container */}
-              <div
-                style={{
-                  backgroundColor: card.iconBgColor,
-                  borderRadius: "6px",
-                  width: "24px",
-                  height: "24px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  color: card.iconColor,
-                  flexShrink: 0,
-                }}
-              >
-                {card.icon}
-              </div>
-
-              {/* Label - Next to Icon */}
-              <p
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: card.textColor,
-                  margin: 0,
-                  lineHeight: "1.2",
-                  flex: 1,
-                }}
-              >
-                {card.label}
-              </p>
-            </div>
-
-            {/* Value and Unit */}
-            <div
-              style={{ display: "flex", alignItems: "baseline", gap: "2px" }}
-            >
-              <span
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 900,
-                  color: card.textColor,
-                }}
-              >
-                {typeof card.value === "string"
-                  ? card.value
-                  : card.value.toLocaleString()}
-              </span>
-              {card.unit && (
-                <span style={{ fontSize: "10px", color: card.unitColor }}>
-                  {card.unit}
-                </span>
               )}
             </div>
+          );
+        })}
+      </div>
 
-            {/* Subtitle */}
-            {card.subtitle && (
-              <p
-                style={{
-                  fontSize: "9px",
-                  fontWeight: 600,
-                  color: card.subtitleColor,
-                  margin: 0,
+      {/* ── FILTER SHEET ── */}
+      <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl max-h-[75vh] p-0 overflow-hidden flex flex-col"
+        >
+          <div className="px-5 py-4 border-b bg-white flex items-center justify-between flex-shrink-0">
+            <SheetTitle className="text-base font-semibold text-slate-900">
+              Filters
+            </SheetTitle>
+            {activeFilterCount > 0 && (
+              <button
+                onClick={() => {
+                  setHybridType("all");
+                  setFilterUnit("all");
+                  setFilterLocation("all");
+                  setFilterVillage("all");
                 }}
+                className="text-xs text-[#4CAF50] font-semibold"
               >
-                {card.subtitle}
-              </p>
+                Reset All
+              </button>
+            )}
+            <SheetDescription className="sr-only">
+              Filter Home data
+            </SheetDescription>
+          </div>
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {/* Hybrid */}
+            <div>
+              <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                Hybrid
+              </label>
+              <Select value={hybridType} onValueChange={setHybridType}>
+                <SelectTrigger className="h-10 bg-white border-slate-300">
+                  <SelectValue placeholder="All Hybrids" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Hybrids</SelectItem>
+                  <SelectItem value="dkc-9144">DKC 9144</SelectItem>
+                  <SelectItem value="p3396">P 3396</SelectItem>
+                  <SelectItem value="nk-6240">NK 6240</SelectItem>
+                  <SelectItem value="9001-gold">9001 GOLD</SelectItem>
+                  <SelectItem value="pioneer-3396">Pioneer 3396</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Unit — Unit Lead only */}
+            {visibleFilters.includes("unit") && (
+              <div>
+                <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                  Unit
+                </label>
+                <Select value={filterUnit} onValueChange={setFilterUnit}>
+                  <SelectTrigger className="h-10 bg-white border-slate-300">
+                    <SelectValue placeholder="All Units" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Units</SelectItem>
+                    <SelectItem value="unit-north">Unit North</SelectItem>
+                    <SelectItem value="unit-south">Unit South</SelectItem>
+                    <SelectItem value="unit-east">Unit East</SelectItem>
+                    <SelectItem value="unit-west">Unit West</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Location — TM + UL */}
+            {visibleFilters.includes("location") && (
+              <div>
+                <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                  Location
+                </label>
+                <Select
+                  value={filterLocation}
+                  onValueChange={setFilterLocation}
+                >
+                  <SelectTrigger className="h-10 bg-white border-slate-300">
+                    <SelectValue placeholder="All Locations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    <SelectItem value="location-a">Location A</SelectItem>
+                    <SelectItem value="location-b">Location B</SelectItem>
+                    <SelectItem value="location-c">Location C</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Village — all roles */}
+            {visibleFilters.includes("village") && (
+              <div>
+                <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                  Village
+                </label>
+                <Select value={filterVillage} onValueChange={setFilterVillage}>
+                  <SelectTrigger className="h-10 bg-white border-slate-300">
+                    <SelectValue placeholder="All Villages" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Villages</SelectItem>
+                    <SelectItem value="rampur">Rampur</SelectItem>
+                    <SelectItem value="lakhanpur">Lakhanpur</SelectItem>
+                    <SelectItem value="sultanpur">Sultanpur</SelectItem>
+                    <SelectItem value="govindpur">Govindpur</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             )}
           </div>
-        ))}
-      </div>
+          <div className="px-5 py-4 border-t bg-white flex-shrink-0">
+            <Button
+              className="w-full bg-[#4CAF50] hover:bg-[#45a049] text-white h-11 text-sm font-semibold"
+              onClick={() => setIsFilterOpen(false)}
+            >
+              Apply Filters
+              {activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

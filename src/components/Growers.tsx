@@ -79,11 +79,11 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
   const [mediaEntries, setMediaEntries] = useState<any[]>([]);
 
   const [filters, setFilters] = useState({
-    state: "all",
-    district: "all",
-    taluka: "all",
+    unit: "all",
+    location: "all",
+    block: "all",
     village: "all",
-    farmerCategory: "all",
+    hybrid: "all",
   });
 
   const [auditFilter, setAuditFilter] = useState<"all" | "audited" | "pending">(
@@ -94,11 +94,11 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
   const [plotStageFilter, setPlotStageFilter] = useState("all");
 
   const activeFilterCount = [
-    filters.state !== "all",
-    filters.district !== "all",
-    filters.taluka !== "all",
+    filters.unit !== "all",
+    filters.location !== "all",
+    filters.block !== "all",
     filters.village !== "all",
-    filters.farmerCategory !== "all",
+    filters.hybrid !== "all",
   ].filter(Boolean).length;
 
   const filteredGrowers = MOCK_GROWERS.filter((g) => {
@@ -111,18 +111,11 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
     if (!matchesSearch) return false;
 
-    if (filters.state !== "all" && filters.state !== "punjab") return false;
-    if (filters.district !== "all" && filters.district !== "amritsar")
-      return false;
-    if (filters.taluka !== "all" && filters.taluka !== "beas") return false;
     if (
       filters.village !== "all" &&
       g.village.toLowerCase() !== filters.village
     )
       return false;
-    if (filters.farmerCategory !== "all") {
-      // Add farmer category logic when available in mock data
-    }
 
     return true;
   });
@@ -161,6 +154,15 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             <Input
               placeholder="Enter father's name"
               className="h-12 text-base"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base">PAN Number</Label>
+            <Input
+              placeholder="Enter PAN number (e.g., ABCDE1234F)"
+              className="h-12 text-base"
+              maxLength={10}
             />
           </div>
 
@@ -1135,27 +1137,15 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             </div>
 
             <div className="flex items-center gap-2">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button size="icon" className="h-9 w-9">
-                    <UserPlus className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-fit p-2" align="end">
-                  <div className="space-y-1 w-fit">
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start gap-2"
-                      onClick={() => {
-                        setIsAddGrowerOpen(true);
-                      }}
-                    >
-                      <UserPlus className="h-4 w-4" />
-                      New Grower
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              <button
+                className="flex items-center gap-1.5 bg-[#4CAF50] hover:bg-[#388E3C] text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+                onClick={() => {
+                  setIsAddGrowerOpen(true);
+                }}
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                Add New Grower
+              </button>
             </div>
             <Dialog
               open={isAddGrowerOpen}
@@ -1213,8 +1203,9 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             {/* Filter Icon with Popover */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8 gap-2">
+                <Button variant="outline" size="sm" className="h-8 gap-1.5">
                   <Filter className="h-4 w-4" />
+                  <span className="text-xs">Filter</span>
                   {activeFilterCount > 0 && (
                     <Badge
                       variant="secondary"
@@ -1234,75 +1225,93 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                 </div>
                 <ScrollArea className="h-[300px]">
                   <div className="p-4 space-y-4">
-                    {/* State Filter */}
+                    {/* Hybrid Filter */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">State</Label>
+                      <Label className="text-sm font-medium">Hybrid</Label>
                       <Select
-                        value={filters.state}
+                        value={filters.hybrid}
                         onValueChange={(v) =>
-                          setFilters({ ...filters, state: v })
+                          setFilters({ ...filters, hybrid: v })
                         }
                       >
                         <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="All States" />
+                          <SelectValue placeholder="All Hybrids" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All States</SelectItem>
-                          <SelectItem value="punjab">Punjab</SelectItem>
-                          <SelectItem value="haryana">Haryana</SelectItem>
-                          <SelectItem value="maharashtra">
-                            Maharashtra
-                          </SelectItem>
-                          <SelectItem value="karnataka">Karnataka</SelectItem>
+                          <SelectItem value="all">All Hybrids</SelectItem>
+                          <SelectItem value="dkc-9144">DKC 9144</SelectItem>
+                          <SelectItem value="p3396">P 3396</SelectItem>
+                          <SelectItem value="nk-6240">NK 6240</SelectItem>
+                          <SelectItem value="9001-gold">9001 GOLD</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <Separator />
 
-                    {/* District Filter */}
+                    {/* Unit Filter */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">District</Label>
+                      <Label className="text-sm font-medium">Unit</Label>
                       <Select
-                        value={filters.district}
+                        value={filters.unit}
                         onValueChange={(v) =>
-                          setFilters({ ...filters, district: v })
+                          setFilters({ ...filters, unit: v })
                         }
                       >
                         <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="All Districts" />
+                          <SelectValue placeholder="All Units" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Districts</SelectItem>
-                          <SelectItem value="amritsar">Amritsar</SelectItem>
-                          <SelectItem value="ludhiana">Ludhiana</SelectItem>
-                          <SelectItem value="jalandhar">Jalandhar</SelectItem>
-                          <SelectItem value="patiala">Patiala</SelectItem>
+                          <SelectItem value="all">All Units</SelectItem>
+                          <SelectItem value="unit-north">Unit North</SelectItem>
+                          <SelectItem value="unit-south">Unit South</SelectItem>
+                          <SelectItem value="unit-east">Unit East</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
                     <Separator />
 
-                    {/* Taluka Filter */}
+                    {/* Location Filter */}
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">Taluka</Label>
+                      <Label className="text-sm font-medium">Location</Label>
                       <Select
-                        value={filters.taluka}
+                        value={filters.location}
                         onValueChange={(v) =>
-                          setFilters({ ...filters, taluka: v })
+                          setFilters({ ...filters, location: v })
                         }
                       >
                         <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="All Talukas" />
+                          <SelectValue placeholder="All Locations" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Talukas</SelectItem>
-                          <SelectItem value="beas">Beas</SelectItem>
-                          <SelectItem value="taluka1">Taluka 1</SelectItem>
-                          <SelectItem value="taluka2">Taluka 2</SelectItem>
-                          <SelectItem value="taluka3">Taluka 3</SelectItem>
-                          <SelectItem value="taluka4">Taluka 4</SelectItem>
+                          <SelectItem value="all">All Locations</SelectItem>
+                          <SelectItem value="location-a">Location A</SelectItem>
+                          <SelectItem value="location-b">Location B</SelectItem>
+                          <SelectItem value="location-c">Location C</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <Separator />
+
+                    {/* Block Filter */}
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Block</Label>
+                      <Select
+                        value={filters.block}
+                        onValueChange={(v) =>
+                          setFilters({ ...filters, block: v })
+                        }
+                      >
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="All Blocks" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Blocks</SelectItem>
+                          <SelectItem value="block-1">Block 1</SelectItem>
+                          <SelectItem value="block-2">Block 2</SelectItem>
+                          <SelectItem value="block-3">Block 3</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1325,33 +1334,8 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                           <SelectItem value="all">All Villages</SelectItem>
                           <SelectItem value="rampur">Rampur</SelectItem>
                           <SelectItem value="lakhanpur">Lakhanpur</SelectItem>
-                          <SelectItem value="village3">Village 3</SelectItem>
-                          <SelectItem value="village4">Village 4</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Separator />
-
-                    {/* Farmer Category Filter */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">
-                        Farmer Category
-                      </Label>
-                      <Select
-                        value={filters.farmerCategory}
-                        onValueChange={(v) =>
-                          setFilters({ ...filters, farmerCategory: v })
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="All Categories" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Categories</SelectItem>
-                          <SelectItem value="small">Small</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="large">Large</SelectItem>
+                          <SelectItem value="sultanpur">Sultanpur</SelectItem>
+                          <SelectItem value="govindpur">Govindpur</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1368,11 +1352,11 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     className="text-xs"
                     onClick={() => {
                       setFilters({
-                        state: "all",
-                        district: "all",
-                        taluka: "all",
+                        unit: "all",
+                        location: "all",
+                        block: "all",
                         village: "all",
-                        farmerCategory: "all",
+                        hybrid: "all",
                       });
                     }}
                   >
@@ -1432,7 +1416,7 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     <div className="flex items-center gap-3 mt-2 text-xs text-slate-400">
                       <div className="flex items-center gap-1">
                         <Sprout className="h-3.5 w-3.5" />
-                        <span>{grower.plots.length} Plots</span>
+                        <span>{grower.plots.length} Fields</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Phone className="h-3.5 w-3.5" />

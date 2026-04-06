@@ -73,13 +73,17 @@ import plotMapImage from "figma:asset/332f5dc0a96a9859a215db7d62948338a5a56cf1.p
 interface PlotTrackerProps {
   initialAuditFilter?: "all" | "audited" | "pending";
   initialStageFilter?: string;
+  initialStatusFilter?: string;
   selectedRegion?: string;
+  role?: string;
 }
 
 export function PlotTracker({
   initialAuditFilter = "all",
   initialStageFilter = "all",
+  initialStatusFilter = "all",
   selectedRegion = "all",
+  role = "FDO",
 }: PlotTrackerProps = {}) {
   const [viewMode, setViewMode] = useState<"map" | "list">("list");
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
@@ -316,11 +320,20 @@ export function PlotTracker({
     hybrid: "all",
     currentStage: initialStageFilter,
     expectedStage: "all",
+    cropHealth: "all",
   });
 
   const [auditFilter, setAuditFilter] = useState<"all" | "audited" | "pending">(
     initialAuditFilter,
   );
+
+  // Stage pill filter (replacing old All/Measured/Pending tabs)
+  const [activeStagePill, setActiveStagePill] = useState<string>(
+    initialStageFilter !== "all" ? initialStageFilter : "all",
+  );
+  // Status pill filter
+  const [activeStatusPill, setActiveStatusPill] =
+    useState<string>(initialStatusFilter);
 
   const activeFilterCount = [
     filters.grower !== "all",
@@ -333,6 +346,7 @@ export function PlotTracker({
     filters.hybrid !== "all",
     filters.currentStage !== "all",
     filters.expectedStage !== "all",
+    filters.cropHealth !== "all",
   ].filter(Boolean).length;
 
   const filteredPlots = MOCK_PLOTS.filter((plot) => {
@@ -371,6 +385,9 @@ export function PlotTracker({
     )
       return false;
     if (auditFilter !== "all" && plot.auditStatus !== auditFilter) return false;
+    // Stage pill filter
+    if (activeStagePill !== "all" && plot.stage !== activeStagePill)
+      return false;
 
     return true;
   });
@@ -3323,37 +3340,23 @@ export function PlotTracker({
       {/* Top Bar */}
       <div className="flex justify-between items-center gap-4">
         <div>
-          <h2 className="text-xl font-bold">Field Tracker</h2>
-          <p className="text-sm text-slate-500">{filteredPlots.length} plots</p>
+          <h2 className="text-xl font-bold">Fields</h2>
+          <p className="text-sm text-slate-500">
+            {filteredPlots.length} fields
+          </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon">
-            <Download className="h-4 w-4" />
-          </Button>
-
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button size="icon">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-56 p-2" align="end">
-              <div className="space-y-1">
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start gap-2"
-                  onClick={() => {
-                    setWizardInitialStep(1);
-                    setIsAddPlotOpen(true);
-                  }}
-                >
-                  <Plus className="h-4 w-4" />
-                  New Field
-                </Button>
-              </div>
-            </PopoverContent>
-          </Popover>
+          <button
+            className="flex items-center gap-1.5 bg-[#4CAF50] hover:bg-[#388E3C] text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+            onClick={() => {
+              setWizardInitialStep(1);
+              setIsAddPlotOpen(true);
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add New Field
+          </button>
 
           <AddPlotWizard
             isOpen={isAddPlotOpen}
@@ -3599,8 +3602,9 @@ export function PlotTracker({
           {/* Filter Icon with Popover */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="h-8 gap-2">
+              <Button variant="outline" size="sm" className="h-8 gap-1.5">
                 <Filter className="h-4 w-4" />
+                <span className="text-xs">Filter</span>
                 {activeFilterCount > 0 && (
                   <Badge variant="secondary" className="h-4 px-1.5 text-[10px]">
                     {activeFilterCount}
@@ -3831,6 +3835,32 @@ export function PlotTracker({
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <Separator />
+
+                  {/* Crop Health Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Crop Health</Label>
+                    <Select
+                      value={filters.cropHealth}
+                      onValueChange={(v) =>
+                        setFilters({ ...filters, cropHealth: v })
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Select crop health" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="Good">Good</SelectItem>
+                        <SelectItem value="Average">Average</SelectItem>
+                        <SelectItem value="Below Average">
+                          Below Average
+                        </SelectItem>
+                        <SelectItem value="Poor">Poor</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </ScrollArea>
               <div className="p-3 border-t bg-slate-50 flex justify-between items-center">
@@ -3854,6 +3884,7 @@ export function PlotTracker({
                       hybrid: "all",
                       currentStage: "all",
                       expectedStage: "all",
+                      cropHealth: "all",
                     });
                   }}
                 >
@@ -3904,39 +3935,95 @@ export function PlotTracker({
           </div>
         )}
 
-      {/* Quick Audit Filters */}
+      {/* Crop Stage Pills */}
+      {viewMode === "list" && (
+        <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div
+            className="flex items-center gap-2 pb-1"
+            style={{ minWidth: "max-content" }}
+          >
+            {[
+              { id: "all", label: "All Stages" },
+              { id: "Sowing", label: "Sowing" },
+              { id: "Vegetative", label: "Vegetative / Transplanting" },
+              { id: "Flowering", label: "Flowering" },
+              { id: "Harvest", label: "Harvest" },
+              { id: "Dispatch", label: "Dispatch" },
+            ].map((stage) => {
+              const count =
+                stage.id === "all"
+                  ? MOCK_PLOTS.length
+                  : MOCK_PLOTS.filter((p) => p.stage === stage.id).length;
+              const isActive = activeStagePill === stage.id;
+              return (
+                <button
+                  key={stage.id}
+                  onClick={() => {
+                    setActiveStagePill(stage.id);
+                    setActiveStatusPill("all");
+                  }}
+                  className={`h-8 px-3 text-xs rounded-full border font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                    isActive
+                      ? "bg-[#4CAF50] text-white border-[#4CAF50]"
+                      : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  {stage.label}
+                  <span
+                    className={`text-[9px] font-bold rounded-full px-1 py-0 ${isActive ? "bg-white/30 text-white" : "bg-slate-100 text-slate-500"}`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Status Pills (cascading under stage) */}
       {viewMode === "list" && (
         <div className="flex items-center gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          <Button
-            variant={auditFilter === "all" ? "default" : "outline"}
-            size="sm"
-            className={`h-8 text-xs whitespace-nowrap ${
-              auditFilter === "all" ? "bg-[#4CAF50] hover:bg-[#388E3C]" : ""
-            }`}
-            onClick={() => setAuditFilter("all")}
-          >
-            All
-          </Button>
-          <Button
-            variant={auditFilter === "audited" ? "default" : "outline"}
-            size="sm"
-            className={`h-8 text-xs whitespace-nowrap ${
-              auditFilter === "audited" ? "bg-[#4CAF50] hover:bg-[#388E3C]" : ""
-            }`}
-            onClick={() => setAuditFilter("audited")}
-          >
-            Field Measured
-          </Button>
-          <Button
-            variant={auditFilter === "pending" ? "default" : "outline"}
-            size="sm"
-            className={`h-8 text-xs whitespace-nowrap ${
-              auditFilter === "pending" ? "bg-[#4CAF50] hover:bg-[#388E3C]" : ""
-            }`}
-            onClick={() => setAuditFilter("pending")}
-          >
-            Field Measurement Pending
-          </Button>
+          {[
+            { id: "all", label: "All Status" },
+            { id: "In Progress", label: "In Progress" },
+            { id: "Not Yet Started", label: "Not Yet Started" },
+            { id: "Completed", label: "Completed" },
+          ].map((status) => {
+            const basePool =
+              activeStagePill === "all"
+                ? MOCK_PLOTS
+                : MOCK_PLOTS.filter((p) => p.stage === activeStagePill);
+            const statusCounts: Record<string, number> = {
+              all: basePool.length,
+              "In Progress": Math.floor(basePool.length * 0.4),
+              "Not Yet Started": Math.floor(basePool.length * 0.35),
+              Completed:
+                basePool.length -
+                Math.floor(basePool.length * 0.4) -
+                Math.floor(basePool.length * 0.35),
+            };
+            const count = statusCounts[status.id] || 0;
+            const isActive = activeStatusPill === status.id;
+            return (
+              <button
+                key={status.id}
+                onClick={() => setActiveStatusPill(status.id)}
+                className={`h-7 px-2.5 text-xs rounded-full border font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  isActive
+                    ? "bg-slate-700 text-white border-slate-700"
+                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {status.label}
+                <span
+                  className={`text-[9px] font-bold rounded-full px-1 ${isActive ? "bg-white/25 text-white" : "bg-slate-100 text-slate-500"}`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -3966,46 +4053,41 @@ export function PlotTracker({
                   <CardContent className="p-0 flex">
                     {/* Main content */}
                     <div
-                      className="flex-1 min-w-0 p-4"
+                      className="flex-1 min-w-0 p-3"
                       onClick={() => setSelectedPlot(plot)}
                     >
-                      <div className="flex items-start gap-2 mb-1">
-                        <h3 className="font-semibold text-base truncate font-mono">
+                      <div className="flex items-start gap-2 mb-0.5">
+                        <h3 className="font-semibold text-sm truncate font-mono text-slate-800">
                           {plot.id}
                         </h3>
                       </div>
-                      <p className="text-sm text-slate-500 mb-2">
+                      <p className="text-sm font-medium text-slate-700 mb-1">
                         {plot.growerName}
                       </p>
-                      <div className="flex items-center gap-4 text-xs text-slate-400">
-                        <div className="flex items-center gap-1">
-                          <Sprout className="h-3.5 w-3.5" />
-                          <span>{plot.crop}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-slate-400">
-                            ({plot.hybrid})
+                      <div className="flex items-center gap-3 text-xs text-slate-500">
+                        <span>{plot.village}</span>
+                        <span className="text-slate-300">|</span>
+                        <span>{plot.hybrid}</span>
+                      </div>
+                      {plot.stage && (
+                        <div className="mt-1.5">
+                          <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
+                            {plot.stage}
                           </span>
                         </div>
-                      </div>
-                      <div className="text-xs text-slate-400 mt-1">
-                        Sowing Date:{" "}
-                        {new Date(plot.sowingDate).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </div>
+                      )}
                     </div>
-                    {/* Crop Health partition */}
+                    {/* Crop Health partition — FDO cannot edit */}
                     <div
-                      className="w-1/4 flex flex-col items-center justify-center bg-slate-50 border-l border-slate-200 px-2 cursor-pointer hover:bg-slate-100 active:bg-slate-200 transition-colors shrink-0 self-stretch"
+                      className={`w-[72px] flex flex-col items-center justify-center bg-slate-50 border-l border-slate-200 px-2 shrink-0 self-stretch ${role !== "FDO" ? "cursor-pointer hover:bg-slate-100 active:bg-slate-200 transition-colors" : "cursor-default"}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        setCropHealthModalPlotId(plot.id);
+                        if (role !== "FDO") {
+                          setCropHealthModalPlotId(plot.id);
+                        }
                       }}
                     >
-                      <p className="text-[10px] font-semibold text-slate-500 text-center leading-tight mb-1">
+                      <p className="text-[9px] font-semibold text-slate-500 text-center leading-tight mb-1">
                         Crop Health
                       </p>
                       <p
@@ -4013,6 +4095,11 @@ export function PlotTracker({
                       >
                         {health || "—"}
                       </p>
+                      {role !== "FDO" && (
+                        <p className="text-[8px] text-slate-400 mt-0.5 text-center">
+                          tap to set
+                        </p>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
