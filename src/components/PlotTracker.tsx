@@ -1060,6 +1060,13 @@ export function PlotTracker({
                         </Button>
                       </div>
                     )}
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -1250,6 +1257,13 @@ export function PlotTracker({
                           }
                         />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1485,6 +1499,13 @@ export function PlotTracker({
                           )
                         }
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -1868,6 +1889,13 @@ export function PlotTracker({
                         />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -1897,6 +1925,13 @@ export function PlotTracker({
                           updateStageField("quality", "notes", e.target.value)
                         }
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -2082,6 +2117,13 @@ export function PlotTracker({
                         }
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -2153,6 +2195,13 @@ export function PlotTracker({
                         ))}
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
+                    </div>
                   </div>
                 )}
 
@@ -2204,6 +2253,13 @@ export function PlotTracker({
                           )
                         }
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -2259,6 +2315,13 @@ export function PlotTracker({
                           </p>
                         </div>
                       )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Add Media</Label>
+                      <Button variant="outline" className="w-full gap-2">
+                        <Camera className="h-4 w-4" />
+                        Upload Photo/Video
+                      </Button>
                     </div>
                   </div>
                 )}
