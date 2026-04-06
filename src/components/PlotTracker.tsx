@@ -2567,7 +2567,7 @@ export function PlotTracker({
             </Card>
 
             {/* In-season Observations */}
-            <Card>
+            {/* <Card>
               <CardContent className="p-4 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-slate-900">
@@ -2575,7 +2575,6 @@ export function PlotTracker({
                   </h3>
                 </div>
 
-                {/* List of saved observations */}
                 {observations.length > 0 && !isSeasonDetailsOpen && (
                   <div className="space-y-3">
                     {observations.map((obs) => (
@@ -2919,7 +2918,7 @@ export function PlotTracker({
                   </div>
                 )}
               </CardContent>
-            </Card>
+            </Card> */}
           </TabsContent>
 
           {/* Advisory Tasks Tab */}
@@ -3854,7 +3853,7 @@ export function PlotTracker({
             }`}
             onClick={() => setAuditFilter("audited")}
           >
-            Audited
+            Field Measured
           </Button>
           <Button
             variant={auditFilter === "pending" ? "default" : "outline"}
@@ -3864,7 +3863,7 @@ export function PlotTracker({
             }`}
             onClick={() => setAuditFilter("pending")}
           >
-            Audit Pending
+            Field Measurement Pending
           </Button>
         </div>
       )}
@@ -3889,14 +3888,14 @@ export function PlotTracker({
                     {plot.auditStatus === "audited" ? (
                       <Badge className="bg-green-100 hover:bg-green-100 text-green-700 border-green-200 flex items-center gap-1 shrink-0">
                         <CheckCircle2 className="h-3 w-3" />
-                        Audited
+                        Field Measured
                       </Badge>
                     ) : (
                       <Badge
                         variant="outline"
                         className="bg-slate-50 text-slate-600 border-slate-200 shrink-0"
                       >
-                        Audit Pending
+                        Field Measurement Pending
                       </Badge>
                     )}
                   </div>
