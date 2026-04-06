@@ -1,8 +1,28 @@
-@import 'tailwindcss' source(none);
+@import "tailwindcss" source(none);
 @source './**/*.{js,ts,jsx,tsx}';
-@import 'tw-animate-css';
-@import './styles/globals.css';
+@import "tw-animate-css";
+@import "./styles/globals.css";
 
 @layer base {
-  html, body, #root { min-height: 100vh; height: 100%; margin: 0; }
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100vh;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }

@@ -107,13 +107,15 @@ export function Layout({
   return (
     <div className="relative flex flex-col h-full w-full bg-gray-50 overflow-hidden">
       {/* Mobile Top Header */}
-      <div className="py-3 bg-[#4CAF50] text-white shadow-md z-20 px-4">
+      <div className="py-3 bg-[#4CAF50] text-white shadow-md z-20 px-1">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-semibold text-white">Rajiv Sharma</span>
+          <span className="text-sm font-semibold text-white truncate">
+            Rajiv Sharma
+          </span>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full">
+            <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full flex-shrink-0">
               <div className="h-2 w-2 rounded-full bg-[#4CAF50] animate-pulse" />
-              <span className="text-[10px] text-[#4CAF50] font-medium">
+              <span className="text-[10px] text-[#4CAF50] font-medium whitespace-nowrap">
                 Connected
               </span>
             </div>
@@ -122,7 +124,7 @@ export function Layout({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-white hover:bg-white/10 rounded-full h-9 w-9"
+                  className="text-white hover:bg-white/10 rounded-full h-9 w-9 flex-shrink-0"
                 >
                   <User className="h-5 w-5" />
                 </Button>
@@ -265,7 +267,7 @@ export function Layout({
       </div>
 
       {/* Page Content */}
-      <main className="flex-1 overflow-y-auto pb-17 px-3 pt-3 bg-[#f5f5f5] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <main className="flex-1 overflow-y-auto pb-20 px-1 pt-1 bg-[#f5f5f5] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {children}
       </main>
 
@@ -467,8 +469,8 @@ export function Layout({
       </Sheet>
 
       {/* Bottom Navigation - All tabs in 1 row */}
-      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20">
-        <div className="grid grid-cols-5 gap-0">
+      <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20 w-full">
+        <div className="grid grid-cols-5 gap-0 w-full">
           {bottomNavItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -476,7 +478,7 @@ export function Layout({
               <button
                 key={item.id}
                 onClick={() => onTabChange(item.id)}
-                className={`flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 transition-all duration-200 border-b-2 ${
+                className={`flex flex-col items-center justify-center gap-0.5 py-2 px-0.5 transition-all duration-200 border-b-2 min-h-[60px] ${
                   isActive
                     ? "text-[#4CAF50] border-[#4CAF50] bg-green-50"
                     : "text-gray-400 border-transparent"
