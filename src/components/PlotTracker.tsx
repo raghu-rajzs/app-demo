@@ -59,6 +59,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "./ui/sheet";
 import { AddPlotWizard } from "./AddPlotWizard";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Checkbox } from "./ui/checkbox";
@@ -244,6 +245,14 @@ export function PlotTracker({
     taskType: "",
     dueDate: "",
   });
+
+  // Crop Health per plot
+  const [cropHealthMap, setCropHealthMap] = useState<Record<string, string>>(
+    {},
+  );
+  const [cropHealthModalPlotId, setCropHealthModalPlotId] = useState<
+    string | null
+  >(null);
 
   // Remarks for completed tasks
   const [isRemarksDialogOpen, setIsRemarksDialogOpen] = useState(false);
@@ -1060,13 +1069,13 @@ export function PlotTracker({
                         </Button>
                       </div>
                     )}
-                    <div className="space-y-2">
+                    {/* <div className="space-y-2">
                       <Label>Add Media</Label>
                       <Button variant="outline" className="w-full gap-2">
                         <Camera className="h-4 w-4" />
                         Upload Photo/Video
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 )}
 
@@ -3935,58 +3944,179 @@ export function PlotTracker({
       {viewMode === "map" ? (
         <MockMapView />
       ) : (
-        <div className="flex-1 h-0 overflow-y-auto space-y-3 pb-20">
-          {filteredPlots.map((plot) => (
-            <Card
-              key={plot.id}
-              onClick={() => setSelectedPlot(plot)}
-              className="cursor-pointer transition-all hover:shadow-md active:scale-[0.98]"
-            >
-              <CardContent className="p-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2 mb-1">
-                    <h3 className="font-semibold text-base truncate font-mono">
-                      {plot.id}
-                    </h3>
-                    {plot.auditStatus === "audited" ? (
-                      <Badge className="bg-green-100 hover:bg-green-100 text-green-700 border-green-200 flex items-center gap-1 shrink-0">
-                        <CheckCircle2 className="h-3 w-3" />
-                        Field Measured
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="bg-slate-50 text-slate-600 border-slate-200 shrink-0"
+        <>
+          <div className="flex-1 h-0 overflow-y-auto space-y-3 pb-20">
+            {filteredPlots.map((plot) => {
+              const health = cropHealthMap[plot.id];
+              const healthColor =
+                health === "Good"
+                  ? "text-green-600"
+                  : health === "Average"
+                    ? "text-yellow-600"
+                    : health === "Below Average"
+                      ? "text-orange-500"
+                      : health === "Poor"
+                        ? "text-red-600"
+                        : "text-slate-400";
+              return (
+                <Card
+                  key={plot.id}
+                  className="cursor-pointer transition-all hover:shadow-md active:scale-[0.98] overflow-hidden"
+                >
+                  <CardContent className="p-0 flex">
+                    {/* Main content */}
+                    <div
+                      className="flex-1 min-w-0 p-4"
+                      onClick={() => setSelectedPlot(plot)}
+                    >
+                      <div className="flex items-start gap-2 mb-1">
+                        <h3 className="font-semibold text-base truncate font-mono">
+                          {plot.id}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-slate-500 mb-2">
+                        {plot.growerName}
+                      </p>
+                      <div className="flex items-center gap-4 text-xs text-slate-400">
+                        <div className="flex items-center gap-1">
+                          <Sprout className="h-3.5 w-3.5" />
+                          <span>{plot.crop}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-slate-400">
+                            ({plot.hybrid})
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-slate-400 mt-1">
+                        Sowing Date:{" "}
+                        {new Date(plot.sowingDate).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </div>
+                    </div>
+                    {/* Crop Health partition */}
+                    <div
+                      className="w-1/4 flex flex-col items-center justify-center bg-slate-50 border-l border-slate-200 px-2 cursor-pointer hover:bg-slate-100 active:bg-slate-200 transition-colors shrink-0 self-stretch"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setCropHealthModalPlotId(plot.id);
+                      }}
+                    >
+                      <p className="text-[10px] font-semibold text-slate-500 text-center leading-tight mb-1">
+                        Crop Health
+                      </p>
+                      <p
+                        className={`text-xs font-bold text-center leading-tight ${healthColor}`}
                       >
-                        Field Measurement Pending
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-500 mb-2">
-                    {plot.growerName}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-slate-400">
-                    <div className="flex items-center gap-1">
-                      <Sprout className="h-3.5 w-3.5" />
-                      <span>{plot.crop}</span>
+                        {health || "—"}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-slate-400">({plot.hybrid})</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-400 mt-1">
-                    Sowing Date:{" "}
-                    {new Date(plot.sowingDate).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Crop Health Sheet */}
+          <Sheet
+            open={cropHealthModalPlotId !== null}
+            onOpenChange={(open) => {
+              if (!open) setCropHealthModalPlotId(null);
+            }}
+          >
+            <SheetContent
+              side="bottom"
+              className="rounded-t-2xl max-h-[60vh] p-0 overflow-hidden flex flex-col"
+            >
+              <div className="px-5 py-4 border-b bg-white flex items-center justify-between flex-shrink-0">
+                <SheetTitle className="text-base font-semibold text-slate-900">
+                  Crop Health
+                </SheetTitle>
+                {cropHealthModalPlotId &&
+                  cropHealthMap[cropHealthModalPlotId] && (
+                    <button
+                      onClick={() => {
+                        if (cropHealthModalPlotId) {
+                          setCropHealthMap((prev) => {
+                            const next = { ...prev };
+                            delete next[cropHealthModalPlotId];
+                            return next;
+                          });
+                        }
+                      }}
+                      className="text-xs text-[#4CAF50] font-semibold"
+                    >
+                      Clear
+                    </button>
+                  )}
+                <SheetDescription className="sr-only">
+                  Select crop health status
+                </SheetDescription>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <p className="text-xs text-slate-500 mb-3">
+                  {cropHealthModalPlotId} — Select the current crop health
+                  status
+                </p>
+                <div className="space-y-2">
+                  {[
+                    {
+                      label: "Good",
+                      color: "text-green-600",
+                      active: "border-green-500 bg-green-50",
+                    },
+                    {
+                      label: "Average",
+                      color: "text-yellow-600",
+                      active: "border-yellow-500 bg-yellow-50",
+                    },
+                    {
+                      label: "Below Average",
+                      color: "text-orange-500",
+                      active: "border-orange-400 bg-orange-50",
+                    },
+                    {
+                      label: "Poor",
+                      color: "text-red-600",
+                      active: "border-red-500 bg-red-50",
+                    },
+                  ].map((option) => {
+                    const selected = cropHealthModalPlotId
+                      ? cropHealthMap[cropHealthModalPlotId] === option.label
+                      : false;
+                    return (
+                      <button
+                        key={option.label}
+                        type="button"
+                        onClick={() => {
+                          if (cropHealthModalPlotId) {
+                            setCropHealthMap((prev) => ({
+                              ...prev,
+                              [cropHealthModalPlotId]: option.label,
+                            }));
+                            setCropHealthModalPlotId(null);
+                          }
+                        }}
+                        className={`w-full py-3 px-4 rounded-md border text-sm font-semibold transition-colors text-left ${
+                          selected
+                            ? `${option.active} ${option.color} border-2`
+                            : "bg-white text-slate-700 border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <span className={selected ? option.color : ""}>
+                          {option.label}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </>
       )}
     </div>
   );
