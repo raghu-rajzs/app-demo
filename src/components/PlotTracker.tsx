@@ -329,7 +329,7 @@ export function PlotTracker({
 
   // Stage pill filter (replacing old All/Measured/Pending tabs)
   const [activeStagePill, setActiveStagePill] = useState<string>(
-    initialStageFilter !== "all" ? initialStageFilter : "all",
+    initialStageFilter !== "all" ? initialStageFilter : "Sowing",
   );
   // Status pill filter
   const [activeStatusPill, setActiveStatusPill] =
@@ -661,7 +661,7 @@ export function PlotTracker({
             </p>
           </div>
           <Button variant="ghost" size="icon" className="h-8 w-8 flex-shrink-0">
-            <Share2 className="h-4 w-4" />
+            {/* <Share2 className="h-4 w-4" /> */}
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -763,6 +763,12 @@ export function PlotTracker({
                     <p className="text-xs text-slate-500">Crop</p>
                     <p className="font-medium text-slate-900">
                       {selectedPlot.crop}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Crop Stage</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedPlot.stage}
                     </p>
                   </div>
                   <div>
@@ -3943,17 +3949,12 @@ export function PlotTracker({
             style={{ minWidth: "max-content" }}
           >
             {[
-              { id: "all", label: "All Stages" },
               { id: "Sowing", label: "Sowing" },
               { id: "Vegetative", label: "Vegetative / Transplanting" },
               { id: "Flowering", label: "Flowering" },
               { id: "Harvest", label: "Harvest" },
               { id: "Dispatch", label: "Dispatch" },
             ].map((stage) => {
-              const count =
-                stage.id === "all"
-                  ? MOCK_PLOTS.length
-                  : MOCK_PLOTS.filter((p) => p.stage === stage.id).length;
               const isActive = activeStagePill === stage.id;
               return (
                 <button
@@ -3962,18 +3963,13 @@ export function PlotTracker({
                     setActiveStagePill(stage.id);
                     setActiveStatusPill("all");
                   }}
-                  className={`h-8 px-3 text-xs rounded-full border font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  className={`h-8 px-3 text-xs rounded-full border font-medium whitespace-nowrap transition-colors ${
                     isActive
                       ? "bg-[#4CAF50] text-white border-[#4CAF50]"
                       : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
                   }`}
                 >
                   {stage.label}
-                  <span
-                    className={`text-[9px] font-bold rounded-full px-1 py-0 ${isActive ? "bg-white/30 text-white" : "bg-slate-100 text-slate-500"}`}
-                  >
-                    {count}
-                  </span>
                 </button>
               );
             })}
@@ -3990,10 +3986,9 @@ export function PlotTracker({
             { id: "Not Yet Started", label: "Not Yet Started" },
             { id: "Completed", label: "Completed" },
           ].map((status) => {
-            const basePool =
-              activeStagePill === "all"
-                ? MOCK_PLOTS
-                : MOCK_PLOTS.filter((p) => p.stage === activeStagePill);
+            const basePool = MOCK_PLOTS.filter(
+              (p) => p.stage === activeStagePill,
+            );
             const statusCounts: Record<string, number> = {
               all: basePool.length,
               "In Progress": Math.floor(basePool.length * 0.4),

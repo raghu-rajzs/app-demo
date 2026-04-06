@@ -50,13 +50,19 @@ export type Plot = {
 
 export type Grower = {
   id: string;
-  name: string;
+  name: string; // Preferred Name
+  agreementName: string; // Agreement Name
   age: number;
   fathersName: string;
   phone: string;
+  alternatePhone?: string;
   village: string;
   region: string;
-  category: "Small" | "Medium" | "Large";
+  block: string;
+  unit: string;
+  location: string; // Territory for Rice, Location for Corn
+  cropType: "Corn" | "Rice";
+  category: "Small" | "Medium" | "Large"; // Farmer Category
   plots: string[]; // Plot IDs
   yieldForecast: number;
   image: string;
@@ -254,21 +260,46 @@ function generateGrowers(): Grower[] {
     "https://github.com/shadcn.png",
   ];
 
+  const units = ["Unit North", "Unit South", "Unit East", "Unit West"];
+  const locations = ["Location A", "Location B", "Location C", "Location D"];
+  const territories = [
+    "Territory 1",
+    "Territory 2",
+    "Territory 3",
+    "Territory 4",
+  ];
+  const blocks = ["Block A", "Block B", "Block C", "Block D"];
+  const cropTypes: Array<"Corn" | "Rice"> = ["Corn", "Rice"];
+
   for (let i = 0; i < 35; i++) {
     const name = growerNames[i % growerNames.length];
     const village = villages[Math.floor(Math.random() * villages.length)];
     const category: "Small" | "Medium" | "Large" =
       i % 3 === 0 ? "Large" : i % 3 === 1 ? "Medium" : "Small";
+    const cropType = cropTypes[i % cropTypes.length];
+    const unit = units[i % units.length];
+    const block = blocks[i % blocks.length];
+    const location =
+      cropType === "Rice"
+        ? territories[i % territories.length]
+        : locations[i % locations.length];
 
     growers.push({
       id: `g${i + 1}`,
       name: `${name} ${i > growerNames.length - 1 ? i - growerNames.length + 1 : ""}`.trim(),
+      agreementName:
+        `${name} (Agreement) ${i > growerNames.length - 1 ? i - growerNames.length + 1 : ""}`.trim(),
       age: 30 + Math.floor(Math.random() * 40),
       fathersName: "Father " + name,
       phone: `+91 ${98700 + i} ${43210 + i}`,
+      alternatePhone: `+91 ${95500 + i} ${12345 + i}`,
       panNumber: `PAN${String(1000 + i).slice(-4)}${String.fromCharCode(65 + (i % 26))}`,
       village,
       region: `${villages[i % villages.length]} Region`,
+      unit,
+      block,
+      location,
+      cropType,
       category,
       plots: [],
       yieldForecast:

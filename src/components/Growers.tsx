@@ -43,6 +43,7 @@ import {
   MoreVertical,
   Share2,
   Download,
+  Map as MapIcon,
 } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { AddPlotWizard } from "./AddPlotWizard";
@@ -72,11 +73,125 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [addStep, setAddStep] = useState(1);
   const [selectedCropType, setSelectedCropType] = useState("Corn");
+  const [editingGrowerId, setEditingGrowerId] = useState<string | null>(null);
+
+  // Form data state
+  const [formData, setFormData] = useState({
+    preferredName: "",
+    agreementName: "",
+    age: "",
+    fathersName: "",
+    panNumber: "",
+    phone: "",
+    alternatePhone: "",
+    cropType: "Corn",
+    unit: "",
+    location: "",
+    territory: "",
+    block: "",
+    village: "",
+    category: "",
+  });
 
   // Plot details state
   const [isMediaSectionOpen, setIsMediaSectionOpen] = useState(true);
   const [isMediaSaved, setIsMediaSaved] = useState(false);
   const [mediaEntries, setMediaEntries] = useState<any[]>([]);
+
+  // Field Stages state
+  const [activeFieldStage, setActiveFieldStage] = useState("pre-sowing");
+  const [isFieldSummaryOpen, setIsFieldSummaryOpen] = useState(false);
+  const [fieldStageData, setFieldStageData] = useState({
+    preSowing: { measured: false, acreage: "" },
+    sowing: {
+      previousCrop: "",
+      plantingRatio: "",
+      maleLotNumber: "",
+      femaleLotNumber: "",
+      maleIssuedAcre: "",
+      femaleIssuedAcre: "",
+      irrigationType: "",
+      femaleSowingDate: "",
+      acres: "",
+      male1PlantingDate: "",
+      male2PlantingDate: "",
+    },
+    vegetative: {
+      areaCancelled: "",
+      areaCancelledReason: [] as string[],
+      plantUniformity: "",
+      ffPlantCount: "",
+      male1PlantCount: "",
+      rowSpacingFF: "",
+      rowSpacingFM: "",
+      rowSpacingMM: "",
+      male2PlantCount: "",
+      plantRouging: "",
+      standingAcre: "",
+      estimatedYield: "",
+    },
+    flowering: {
+      detasselingStart: "",
+      detasselingEnd: "",
+      pollinationInfo: "",
+      ffTasselsThrowing: "",
+      offTypesShedding: "",
+      nicking: "",
+      mSkeletonization: "",
+      ffSilks: "",
+      male1TasselsThrowing: "",
+      male2TasselsThrowing: "",
+      mPollenAmount: "",
+      fieldProblem: "",
+      neighborShedding: "",
+      neighborDistance: "",
+      isolationSufficient: "",
+      isolationCode: "",
+      nickWithContaminantBlock: "",
+      fieldScoreRating: "",
+      standingAcre: "",
+      estimatedYield: "",
+    },
+    quality: { notes: "" },
+    preHarvest: {
+      maleDestruction: "",
+      diseaseIntensity: "",
+      diseaseName: "",
+      cropHealth: "",
+      fieldProblem: "",
+      estimatedYield: "",
+      preHarvestCutMoisture: "",
+      standingAcre: "",
+      estimatedYieldFinal: "",
+    },
+    harvest: {
+      maleDate: "",
+      femaleDate: "",
+      harvestWeight: "",
+      fieldFinal: "",
+    },
+    dispatch: { dispatchWeight: "", truckNumber: "", lrNumber: "" },
+    ccp: { childWorking: "" },
+  });
+
+  const updateStageField = (stage: string, field: string, value: unknown) => {
+    setFieldStageData((prev: any) => ({
+      ...prev,
+      [stage]: { ...prev[stage], [field]: value },
+    }));
+  };
+
+  const FIELD_STAGES = [
+    { id: "pre-sowing", label: "Pre-Sowing" },
+    { id: "sowing", label: "Sowing" },
+    { id: "vegetative", label: "Vegetative" },
+    { id: "flowering", label: "Flowering" },
+    { id: "quality", label: "Quality" },
+    { id: "pre-harvest", label: "Pre-Harvest" },
+    { id: "harvest", label: "Harvest" },
+    { id: "dispatch", label: "Dispatch" },
+    { id: "ccp", label: "CCP" },
+  ];
 
   const [filters, setFilters] = useState({
     unit: "all",
@@ -92,6 +207,7 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
   const [plotHybridFilter, setPlotHybridFilter] = useState("all");
   const [plotStageFilter, setPlotStageFilter] = useState("all");
+  const [plotSearchQuery, setPlotSearchQuery] = useState("");
 
   const activeFilterCount = [
     filters.unit !== "all",
@@ -127,17 +243,79 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
       )
     : null;
 
+  // Handle edit grower
+  const handleEditGrower = (grower: Grower) => {
+    setEditingGrowerId(grower.id);
+    setFormData({
+      preferredName: grower.name,
+      agreementName: grower.agreementName,
+      age: grower.age.toString(),
+      fathersName: grower.fathersName,
+      panNumber: grower.panNumber,
+      phone: grower.phone,
+      alternatePhone: grower.alternatePhone || "",
+      cropType: grower.cropType,
+      unit: grower.unit,
+      location: grower.location,
+      territory: grower.cropType === "Rice" ? grower.location : "",
+      block: grower.block,
+      village: grower.village,
+      category: grower.category,
+    });
+    setSelectedCropType(grower.cropType);
+    setIsAddGrowerOpen(true);
+    setAddStep(1);
+  };
+
+  // Reset form when dialog closes
+  const handleCloseDialog = () => {
+    setIsAddGrowerOpen(false);
+    setEditingGrowerId(null);
+    setAddStep(1);
+    setSelectedCropType("Corn");
+    setFormData({
+      preferredName: "",
+      agreementName: "",
+      age: "",
+      fathersName: "",
+      panNumber: "",
+      phone: "",
+      alternatePhone: "",
+      cropType: "Corn",
+      unit: "",
+      location: "",
+      territory: "",
+      block: "",
+      village: "",
+      category: "",
+    });
+  };
+
   const AddGrowerForm = () => (
     <div className="space-y-4 py-2">
       {addStep === 1 && (
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
           <div className="space-y-2">
             <Label className="text-base">Grower Preferred Name *</Label>
-            <Input placeholder="Enter full name" className="h-12 text-base" />
+            <Input
+              placeholder="Enter full name"
+              className="h-12 text-base"
+              value={formData.preferredName}
+              onChange={(e) =>
+                setFormData({ ...formData, preferredName: e.target.value })
+              }
+            />
           </div>
           <div className="space-y-2">
             <Label className="text-base">Grower Agreement Name *</Label>
-            <Input placeholder="Enter full name" className="h-12 text-base" />
+            <Input
+              placeholder="Enter full name"
+              className="h-12 text-base"
+              value={formData.agreementName}
+              onChange={(e) =>
+                setFormData({ ...formData, agreementName: e.target.value })
+              }
+            />
           </div>
 
           <div className="space-y-2">
@@ -146,6 +324,10 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
               placeholder="Enter age"
               type="number"
               className="h-12 text-base"
+              value={formData.age}
+              onChange={(e) =>
+                setFormData({ ...formData, age: e.target.value })
+              }
             />
           </div>
 
@@ -154,6 +336,10 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             <Input
               placeholder="Enter father's name"
               className="h-12 text-base"
+              value={formData.fathersName}
+              onChange={(e) =>
+                setFormData({ ...formData, fathersName: e.target.value })
+              }
             />
           </div>
 
@@ -163,6 +349,10 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
               placeholder="Enter PAN number (e.g., ABCDE1234F)"
               className="h-12 text-base"
               maxLength={10}
+              value={formData.panNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, panNumber: e.target.value })
+              }
             />
           </div>
 
@@ -170,19 +360,37 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
           <div className="space-y-2">
             <Label>Phone Number</Label>
-            <Input placeholder="+91 98765 43210" className="h-12" />
+            <Input
+              placeholder="+91 98765 43210"
+              className="h-12"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+            />
           </div>
 
           <div className="space-y-2">
             <Label className="text-base">Alternate Number (Optional)</Label>
-            <Input placeholder="+91" type="tel" className="h-12 text-base" />
+            <Input
+              placeholder="+91"
+              type="tel"
+              className="h-12 text-base"
+              value={formData.alternatePhone}
+              onChange={(e) =>
+                setFormData({ ...formData, alternatePhone: e.target.value })
+              }
+            />
           </div>
 
           <div className="space-y-2">
             <Label className="text-base">Crop Type *</Label>
             <Select
-              value={selectedCropType}
-              onValueChange={setSelectedCropType}
+              value={formData.cropType}
+              onValueChange={(v) => {
+                setFormData({ ...formData, cropType: v });
+                setSelectedCropType(v);
+              }}
             >
               <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder="Select Crop Type" />
@@ -198,45 +406,56 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             <>
               <div className="space-y-2">
                 <Label className="text-base">Unit *</Label>
-                <Select>
+                <Select
+                  value={formData.unit}
+                  onValueChange={(v) => setFormData({ ...formData, unit: v })}
+                >
                   <SelectTrigger className="h-12 text-base">
                     <SelectValue placeholder="Select Unit" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unit1">Unit 1</SelectItem>
-                    <SelectItem value="unit2">Unit 2</SelectItem>
-                    <SelectItem value="unit3">Unit 3</SelectItem>
-                    <SelectItem value="unit4">Unit 4</SelectItem>
+                    <SelectItem value="Unit North">Unit North</SelectItem>
+                    <SelectItem value="Unit South">Unit South</SelectItem>
+                    <SelectItem value="Unit East">Unit East</SelectItem>
+                    <SelectItem value="Unit West">Unit West</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-base">Territory *</Label>
-                <Select>
+                <Select
+                  value={formData.territory}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, territory: v, location: v })
+                  }
+                >
                   <SelectTrigger className="h-12 text-base">
                     <SelectValue placeholder="Select Territory" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="territory1">Territory 1</SelectItem>
-                    <SelectItem value="territory2">Territory 2</SelectItem>
-                    <SelectItem value="territory3">Territory 3</SelectItem>
-                    <SelectItem value="territory4">Territory 4</SelectItem>
+                    <SelectItem value="Territory 1">Territory 1</SelectItem>
+                    <SelectItem value="Territory 2">Territory 2</SelectItem>
+                    <SelectItem value="Territory 3">Territory 3</SelectItem>
+                    <SelectItem value="Territory 4">Territory 4</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-base">Block *</Label>
-                <Select>
+                <Select
+                  value={formData.block}
+                  onValueChange={(v) => setFormData({ ...formData, block: v })}
+                >
                   <SelectTrigger className="h-12 text-base">
                     <SelectValue placeholder="Select Block" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="block1">Block 1</SelectItem>
-                    <SelectItem value="block2">Block 2</SelectItem>
-                    <SelectItem value="block3">Block 3</SelectItem>
-                    <SelectItem value="block4">Block 4</SelectItem>
+                    <SelectItem value="Block A">Block A</SelectItem>
+                    <SelectItem value="Block B">Block B</SelectItem>
+                    <SelectItem value="Block C">Block C</SelectItem>
+                    <SelectItem value="Block D">Block D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -245,45 +464,56 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             <>
               <div className="space-y-2">
                 <Label className="text-base">Unit *</Label>
-                <Select>
+                <Select
+                  value={formData.unit}
+                  onValueChange={(v) => setFormData({ ...formData, unit: v })}
+                >
                   <SelectTrigger className="h-12 text-base">
                     <SelectValue placeholder="Select Unit" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="unit1">Unit 1</SelectItem>
-                    <SelectItem value="unit2">Unit 2</SelectItem>
-                    <SelectItem value="unit3">Unit 3</SelectItem>
-                    <SelectItem value="unit4">Unit 4</SelectItem>
+                    <SelectItem value="Unit North">Unit North</SelectItem>
+                    <SelectItem value="Unit South">Unit South</SelectItem>
+                    <SelectItem value="Unit East">Unit East</SelectItem>
+                    <SelectItem value="Unit West">Unit West</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-base">Location *</Label>
-                <Select>
+                <Select
+                  value={formData.location}
+                  onValueChange={(v) =>
+                    setFormData({ ...formData, location: v })
+                  }
+                >
                   <SelectTrigger className="h-12 text-base">
                     <SelectValue placeholder="Select Location" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="location1">Location 1</SelectItem>
-                    <SelectItem value="location2">Location 2</SelectItem>
-                    <SelectItem value="location3">Location 3</SelectItem>
-                    <SelectItem value="location4">Location 4</SelectItem>
+                    <SelectItem value="Location A">Location A</SelectItem>
+                    <SelectItem value="Location B">Location B</SelectItem>
+                    <SelectItem value="Location C">Location C</SelectItem>
+                    <SelectItem value="Location D">Location D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label className="text-base">Block *</Label>
-                <Select>
+                <Select
+                  value={formData.block}
+                  onValueChange={(v) => setFormData({ ...formData, block: v })}
+                >
                   <SelectTrigger className="h-12 text-base">
                     <SelectValue placeholder="Select Block" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="block1">Block 1</SelectItem>
-                    <SelectItem value="block2">Block 2</SelectItem>
-                    <SelectItem value="block3">Block 3</SelectItem>
-                    <SelectItem value="block4">Block 4</SelectItem>
+                    <SelectItem value="Block A">Block A</SelectItem>
+                    <SelectItem value="Block B">Block B</SelectItem>
+                    <SelectItem value="Block C">Block C</SelectItem>
+                    <SelectItem value="Block D">Block D</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -292,15 +522,18 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
           <div className="space-y-2">
             <Label className="text-base">Village *</Label>
-            <Select>
+            <Select
+              value={formData.village}
+              onValueChange={(v) => setFormData({ ...formData, village: v })}
+            >
               <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder="Select Village" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rampur">Rampur</SelectItem>
-                <SelectItem value="lakhanpur">Lakhanpur</SelectItem>
-                <SelectItem value="village3">Village 3</SelectItem>
-                <SelectItem value="village4">Village 4</SelectItem>
+                <SelectItem value="Rampur">Rampur</SelectItem>
+                <SelectItem value="Lakhanpur">Lakhanpur</SelectItem>
+                <SelectItem value="Sultanpur">Sultanpur</SelectItem>
+                <SelectItem value="Rajapur">Rajapur</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -318,14 +551,17 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
           <div className="space-y-2">
             <Label className="text-base">Farmer Category *</Label>
-            <Select>
+            <Select
+              value={formData.category}
+              onValueChange={(v) => setFormData({ ...formData, category: v })}
+            >
               <SelectTrigger className="h-12 text-base">
                 <SelectValue placeholder="Select Category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="small">Small</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="large">Large</SelectItem>
+                <SelectItem value="Small">Small</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Large">Large</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -474,7 +710,7 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
               size="icon"
               className="h-8 w-8 flex-shrink-0"
             >
-              <Share2 className="h-4 w-4" />
+              {/* <Share2 className="h-4 w-4" /> */}
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -587,6 +823,12 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                       <p className="text-xs text-slate-500">Crop</p>
                       <p className="font-medium text-slate-900">
                         {selectedPlot.crop}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Crop Stage</p>
+                      <p className="font-medium text-slate-900">
+                        {selectedPlot.stage}
                       </p>
                     </div>
                     <div>
@@ -745,9 +987,975 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                   )}
                 </CardContent>
               </Card>
-            </TabsContent>
 
-            {/* Advisory Tasks Tab */}
+              {/* Field Stages Section */}
+              <Card>
+                <CardContent className="p-4 space-y-4">
+                  {/* Header with Summary Button */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-900">
+                      Field Stages
+                    </h3>
+                    <Button
+                      size="sm"
+                      className="bg-[#4CAF50] hover:bg-[#388E3C] h-8 text-xs px-3"
+                      onClick={() => setIsFieldSummaryOpen(true)}
+                    >
+                      Summary
+                    </Button>
+                  </div>
+
+                  {/* Stage Pills — wrapping */}
+                  <div className="flex flex-wrap gap-2">
+                    {FIELD_STAGES.map((stage) => (
+                      <button
+                        key={stage.id}
+                        type="button"
+                        onClick={() => setActiveFieldStage(stage.id)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
+                          activeFieldStage === stage.id
+                            ? "bg-[#4CAF50] text-white border-[#4CAF50]"
+                            : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                        }`}
+                      >
+                        {stage.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* ── Pre-Sowing ── */}
+                  {activeFieldStage === "pre-sowing" && (
+                    <div className="space-y-4 pt-2 border-t">
+                      <p className="text-xs text-slate-500">
+                        GPS field measurement is optional. You can proceed to
+                        other stages without measuring.
+                      </p>
+                      {!fieldStageData.preSowing.measured ? (
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2"
+                          onClick={() => {
+                            updateStageField("preSowing", "measured", true);
+                            updateStageField("preSowing", "acreage", "2.30");
+                          }}
+                        >
+                          <MapIcon className="h-4 w-4" />
+                          Measure Field (GPS)
+                        </Button>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 bg-green-50 rounded-md border border-green-200">
+                            <div>
+                              <p className="text-xs text-slate-500">
+                                Measured Acreage
+                              </p>
+                              <p className="text-2xl font-bold text-[#4CAF50]">
+                                {fieldStageData.preSowing.acreage} acres
+                              </p>
+                            </div>
+                            <CheckCircle2 className="h-6 w-6 text-[#4CAF50]" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-slate-500 mb-2">
+                              Field Preview on Map
+                            </p>
+                            <div className="w-full h-40 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                              <ImageWithFallback
+                                src={plotMapImage}
+                                alt="Field map preview"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              updateStageField("preSowing", "measured", false);
+                              updateStageField("preSowing", "acreage", "");
+                            }}
+                          >
+                            Re-measure
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Sowing ── */}
+                  {activeFieldStage === "sowing" && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Previous Crop</Label>
+                          <Select
+                            value={fieldStageData.sowing.previousCrop}
+                            onValueChange={(v) =>
+                              updateStageField("sowing", "previousCrop", v)
+                            }
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="wheat">Wheat</SelectItem>
+                              <SelectItem value="rice">Rice</SelectItem>
+                              <SelectItem value="sugarcane">
+                                Sugarcane
+                              </SelectItem>
+                              <SelectItem value="cotton">Cotton</SelectItem>
+                              <SelectItem value="soybean">Soybean</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Planting Ratio</Label>
+                          <Select
+                            value={fieldStageData.sowing.plantingRatio}
+                            onValueChange={(v) =>
+                              updateStageField("sowing", "plantingRatio", v)
+                            }
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="4:1">4:1</SelectItem>
+                              <SelectItem value="4:2">4:2</SelectItem>
+                              <SelectItem value="6:2">6:2</SelectItem>
+                              <SelectItem value="8:2">8:2</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Male Lot Number</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            placeholder="Enter lot #"
+                            value={fieldStageData.sowing.maleLotNumber}
+                            onChange={(e) =>
+                              updateStageField(
+                                "sowing",
+                                "maleLotNumber",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Female Lot Number</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            placeholder="Enter lot #"
+                            value={fieldStageData.sowing.femaleLotNumber}
+                            onChange={(e) =>
+                              updateStageField(
+                                "sowing",
+                                "femaleLotNumber",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Male Issued Acre</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0.0"
+                            value={fieldStageData.sowing.maleIssuedAcre}
+                            onChange={(e) =>
+                              updateStageField(
+                                "sowing",
+                                "maleIssuedAcre",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Female Issued Acre</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0.0"
+                            value={fieldStageData.sowing.femaleIssuedAcre}
+                            onChange={(e) =>
+                              updateStageField(
+                                "sowing",
+                                "femaleIssuedAcre",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Irrigation Type</Label>
+                        <Select
+                          value={fieldStageData.sowing.irrigationType}
+                          onValueChange={(v) =>
+                            updateStageField("sowing", "irrigationType", v)
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="drip">Drip</SelectItem>
+                            <SelectItem value="flood">Flood</SelectItem>
+                            <SelectItem value="sprinkler">Sprinkler</SelectItem>
+                            <SelectItem value="furrow">Furrow</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Female Sowing Date</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="date"
+                          value={fieldStageData.sowing.femaleSowingDate}
+                          onChange={(e) =>
+                            updateStageField(
+                              "sowing",
+                              "femaleSowingDate",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Acres</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0.0"
+                          value={fieldStageData.sowing.acres}
+                          onChange={(e) =>
+                            updateStageField("sowing", "acres", e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Male 1 Planting Date
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="date"
+                            value={fieldStageData.sowing.male1PlantingDate}
+                            onChange={(e) =>
+                              updateStageField(
+                                "sowing",
+                                "male1PlantingDate",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Male 2 Planting Date
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="date"
+                            value={fieldStageData.sowing.male2PlantingDate}
+                            onChange={(e) =>
+                              updateStageField(
+                                "sowing",
+                                "male2PlantingDate",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Vegetative ── */}
+                  {activeFieldStage === "vegetative" && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Area Cancelled (Acre)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0.0"
+                            value={fieldStageData.vegetative.areaCancelled}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "areaCancelled",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Standing Acre</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0.0"
+                            value={fieldStageData.vegetative.standingAcre}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "standingAcre",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Area Cancelled Reason</Label>
+                        <div className="grid grid-cols-2 gap-2 p-3 bg-slate-50 rounded-md border border-slate-200">
+                          {[
+                            "Frost",
+                            "Flooding",
+                            "Pest",
+                            "Disease",
+                            "Poor Germination",
+                            "Other",
+                          ].map((reason) => (
+                            <div
+                              key={reason}
+                              className="flex items-center gap-2"
+                            >
+                              <Checkbox
+                                id={`reason-${reason}`}
+                                checked={fieldStageData.vegetative.areaCancelledReason.includes(
+                                  reason,
+                                )}
+                                onCheckedChange={(checked) => {
+                                  const cur =
+                                    fieldStageData.vegetative
+                                      .areaCancelledReason;
+                                  updateStageField(
+                                    "vegetative",
+                                    "areaCancelledReason",
+                                    checked
+                                      ? [...cur, reason]
+                                      : cur.filter((r: string) => r !== reason),
+                                  );
+                                }}
+                              />
+                              <label
+                                htmlFor={`reason-${reason}`}
+                                className="text-xs text-slate-700 cursor-pointer"
+                              >
+                                {reason}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Plant Uniformity</Label>
+                        <Select
+                          value={fieldStageData.vegetative.plantUniformity}
+                          onValueChange={(v) =>
+                            updateStageField("vegetative", "plantUniformity", v)
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="excellent">Excellent</SelectItem>
+                            <SelectItem value="good">Good</SelectItem>
+                            <SelectItem value="average">Average</SelectItem>
+                            <SelectItem value="poor">Poor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">FF Plant Count</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.vegetative.ffPlantCount}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "ffPlantCount",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Male 1 Plant Count</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.vegetative.male1PlantCount}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "male1PlantCount",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Row Spacing FF (cm)</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.vegetative.rowSpacingFF}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "rowSpacingFF",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Row Spacing FM (cm)</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.vegetative.rowSpacingFM}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "rowSpacingFM",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Row Spacing MM (cm)</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.vegetative.rowSpacingMM}
+                            onChange={(e) =>
+                              updateStageField(
+                                "vegetative",
+                                "rowSpacingMM",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Male 2 Plant Count</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0"
+                          value={fieldStageData.vegetative.male2PlantCount}
+                          onChange={(e) =>
+                            updateStageField(
+                              "vegetative",
+                              "male2PlantCount",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Plant Rouging</Label>
+                        <div className="flex gap-2">
+                          {["yes", "no"].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() =>
+                                updateStageField(
+                                  "vegetative",
+                                  "plantRouging",
+                                  opt,
+                                )
+                              }
+                              className={`flex-1 py-2 rounded-md border text-sm font-medium capitalize transition-colors ${fieldStageData.vegetative.plantRouging === opt ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Estimated Yield (Kg)</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0"
+                          value={fieldStageData.vegetative.estimatedYield}
+                          onChange={(e) =>
+                            updateStageField(
+                              "vegetative",
+                              "estimatedYield",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Flowering ── */}
+                  {activeFieldStage === "flowering" && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Detasseling Start</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="date"
+                            value={fieldStageData.flowering.detasselingStart}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "detasselingStart",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Detasseling End</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="date"
+                            value={fieldStageData.flowering.detasselingEnd}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "detasselingEnd",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">
+                          Pollination Information
+                        </Label>
+                        <Select
+                          value={fieldStageData.flowering.pollinationInfo}
+                          onValueChange={(v) =>
+                            updateStageField("flowering", "pollinationInfo", v)
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="good">Good</SelectItem>
+                            <SelectItem value="average">Average</SelectItem>
+                            <SelectItem value="poor">Poor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            FF Tassels Throwing Pollen (%)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.flowering.ffTasselsThrowing}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "ffTasselsThrowing",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Off-Types Shedding Pollen (%)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.flowering.offTypesShedding}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "offTypesShedding",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Nicking</Label>
+                          <Select
+                            value={fieldStageData.flowering.nicking}
+                            onValueChange={(v) =>
+                              updateStageField("flowering", "nicking", v)
+                            }
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="perfect">Perfect</SelectItem>
+                              <SelectItem value="good">Good</SelectItem>
+                              <SelectItem value="poor">Poor</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">M Skeletonization</Label>
+                          <Select
+                            value={fieldStageData.flowering.mSkeletonization}
+                            onValueChange={(v) =>
+                              updateStageField(
+                                "flowering",
+                                "mSkeletonization",
+                                v,
+                              )
+                            }
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">None</SelectItem>
+                              <SelectItem value="partial">Partial</SelectItem>
+                              <SelectItem value="complete">Complete</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">FF Silks (%)</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0"
+                          value={fieldStageData.flowering.ffSilks}
+                          onChange={(e) =>
+                            updateStageField(
+                              "flowering",
+                              "ffSilks",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Male 1 Tassels Throwing Pollen (%)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={
+                              fieldStageData.flowering.male1TasselsThrowing
+                            }
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "male1TasselsThrowing",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Male 2 Tassels Throwing Pollen (%)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={
+                              fieldStageData.flowering.male2TasselsThrowing
+                            }
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "male2TasselsThrowing",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">M Pollen Amount</Label>
+                        <Select
+                          value={fieldStageData.flowering.mPollenAmount}
+                          onValueChange={(v) =>
+                            updateStageField("flowering", "mPollenAmount", v)
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="abundant">Abundant</SelectItem>
+                            <SelectItem value="moderate">Moderate</SelectItem>
+                            <SelectItem value="scarce">Scarce</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Field Problem</Label>
+                        <Select
+                          value={fieldStageData.flowering.fieldProblem}
+                          onValueChange={(v) =>
+                            updateStageField("flowering", "fieldProblem", v)
+                          }
+                        >
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">None</SelectItem>
+                            <SelectItem value="disease">Disease</SelectItem>
+                            <SelectItem value="pest">Pest</SelectItem>
+                            <SelectItem value="waterlogging">
+                              Waterlogging
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Neighbor Shedding</Label>
+                        <div className="flex gap-2">
+                          {["yes", "no"].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() =>
+                                updateStageField(
+                                  "flowering",
+                                  "neighborShedding",
+                                  opt,
+                                )
+                              }
+                              className={`flex-1 py-2 rounded-md border text-sm font-medium capitalize transition-colors ${fieldStageData.flowering.neighborShedding === opt ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {fieldStageData.flowering.neighborShedding === "yes" && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Neighbor Distance (m)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.flowering.neighborDistance}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "neighborDistance",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      )}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Isolation Sufficient</Label>
+                        <div className="flex gap-2">
+                          {["yes", "no"].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() =>
+                                updateStageField(
+                                  "flowering",
+                                  "isolationSufficient",
+                                  opt,
+                                )
+                              }
+                              className={`flex-1 py-2 rounded-md border text-sm font-medium capitalize transition-colors ${fieldStageData.flowering.isolationSufficient === opt ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Isolation Code</Label>
+                          <Select
+                            value={fieldStageData.flowering.isolationCode}
+                            onValueChange={(v) =>
+                              updateStageField("flowering", "isolationCode", v)
+                            }
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="A">A</SelectItem>
+                              <SelectItem value="B">B</SelectItem>
+                              <SelectItem value="C">C</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Field Score Rating</Label>
+                          <Select
+                            value={fieldStageData.flowering.fieldScoreRating}
+                            onValueChange={(v) =>
+                              updateStageField(
+                                "flowering",
+                                "fieldScoreRating",
+                                v,
+                              )
+                            }
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 — Low Risk</SelectItem>
+                              <SelectItem value="2">2</SelectItem>
+                              <SelectItem value="3">3 — Medium</SelectItem>
+                              <SelectItem value="4">4</SelectItem>
+                              <SelectItem value="5">5 — High Risk</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">
+                          Nick with Contaminant Block
+                        </Label>
+                        <div className="flex gap-2">
+                          {["yes", "no"].map((opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() =>
+                                updateStageField(
+                                  "flowering",
+                                  "nickWithContaminantBlock",
+                                  opt,
+                                )
+                              }
+                              className={`flex-1 py-2 rounded-md border text-sm font-medium capitalize transition-colors ${fieldStageData.flowering.nickWithContaminantBlock === opt ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                            >
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Standing Acre</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0.0"
+                            value={fieldStageData.flowering.standingAcre}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "standingAcre",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Estimated Yield (Kg)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                            value={fieldStageData.flowering.estimatedYield}
+                            onChange={(e) =>
+                              updateStageField(
+                                "flowering",
+                                "estimatedYield",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Quality, Pre-Harvest, Harvest, Dispatch, CCP ── */}
+                  {[
+                    "quality",
+                    "pre-harvest",
+                    "harvest",
+                    "dispatch",
+                    "ccp",
+                  ].includes(activeFieldStage) && (
+                    <div className="space-y-4 pt-2 border-t">
+                      <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
+                        <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
+                          <Sprout className="h-6 w-6 text-slate-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            {activeFieldStage === "quality"
+                              ? "Quality Stage"
+                              : activeFieldStage === "pre-harvest"
+                                ? "Pre-Harvest Stage"
+                                : activeFieldStage === "harvest"
+                                  ? "Harvest Stage"
+                                  : activeFieldStage === "dispatch"
+                                    ? "Dispatch Stage"
+                                    : "CCP Stage"}
+                          </p>
+                          <p className="text-xs text-slate-500 mt-1">
+                            Detailed fields available in full PlotTracker view
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
             <TabsContent
               value="advisory-tasks"
               className="flex-1 overflow-y-auto space-y-4 mt-4 pb-20"
@@ -888,7 +2096,9 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleEditGrower(selectedGrower!)}
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
@@ -912,13 +2122,19 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                 <h3 className="font-semibold text-slate-900">Grower Details</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                   <div>
-                    <p className="text-xs text-slate-500">Grower Name</p>
+                    <p className="text-xs text-slate-500">Preferred Name</p>
                     <p className="font-medium text-slate-900">
                       {selectedGrower.name}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Grower Age</p>
+                    <p className="text-xs text-slate-500">Agreement Name</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.agreementName}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Age</p>
                     <p className="font-medium text-slate-900">
                       {selectedGrower.age} years
                     </p>
@@ -930,21 +2146,9 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">State</p>
-                    <p className="font-medium text-slate-900">Punjab</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">District</p>
-                    <p className="font-medium text-slate-900">Amritsar</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Taluka</p>
-                    <p className="font-medium text-slate-900">Beas</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Village</p>
+                    <p className="text-xs text-slate-500">PAN Number</p>
                     <p className="font-medium text-slate-900">
-                      {selectedGrower.village}
+                      {selectedGrower.panNumber}
                     </p>
                   </div>
                   <div>
@@ -954,16 +2158,55 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Total Plots</p>
+                    <p className="text-xs text-slate-500">Alternate Phone</p>
                     <p className="font-medium text-slate-900">
-                      {selectedGrower.plots.length}
+                      {selectedGrower.alternatePhone || "—"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Crop</p>
+                    <p className="text-xs text-slate-500">Crop Type</p>
                     <p className="font-medium text-slate-900">
-                      {MOCK_PLOTS.find((p) => p.growerId === selectedGrower.id)
-                        ?.crop || "—"}
+                      {selectedGrower.cropType}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Unit</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.unit}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">
+                      {selectedGrower.cropType === "Rice"
+                        ? "Territory"
+                        : "Location"}
+                    </p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.location}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Block</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.block}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Village</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.village}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Category</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.category}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">Total Fields</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.plots.length}
                     </p>
                   </div>
                 </div>
@@ -973,91 +2216,171 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             {/* Associated Plots Card */}
             <Card>
               <CardContent className="p-4 space-y-3">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-slate-900">
                     Associated Plots
                   </h3>
                 </div>
 
-                {/* Filter Options */}
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Hybrid</Label>
-                    <Select
-                      value={plotHybridFilter}
-                      onValueChange={setPlotHybridFilter}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="All Hybrids" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Hybrids</SelectItem>
-                        {Array.from(
-                          new Set(
-                            selectedGrower.plots
-                              .map(
-                                (plotId) =>
-                                  MOCK_PLOTS.find((p) => p.id === plotId)
-                                    ?.hybrid,
-                              )
-                              .filter(Boolean),
-                          ),
-                        ).map((hybrid) => (
-                          <SelectItem key={hybrid} value={hybrid || ""}>
-                            {hybrid}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Search and Filter Bar */}
+                <div className="flex gap-2 items-center">
+                  <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input
+                      type="text"
+                      placeholder="Search plots by ID, hybrid, stage"
+                      value={plotSearchQuery}
+                      onChange={(e) => setPlotSearchQuery(e.target.value)}
+                      className="pl-10 h-9 text-sm"
+                    />
                   </div>
 
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Current Stage</Label>
-                    <Select
-                      value={plotStageFilter}
-                      onValueChange={setPlotStageFilter}
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="All Stages" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Stages</SelectItem>
-                        {Array.from(
-                          new Set(
-                            selectedGrower.plots
-                              .map(
-                                (plotId) =>
-                                  MOCK_PLOTS.find((p) => p.id === plotId)
-                                    ?.stage,
-                              )
-                              .filter(Boolean),
-                          ),
-                        ).map((stage) => (
-                          <SelectItem key={stage} value={stage || ""}>
-                            {stage}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Filter Button with Popover */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 gap-1.5"
+                      >
+                        <Filter className="h-4 w-4" />
+                        <span className="text-xs hidden sm:inline">Filter</span>
+                        {(plotHybridFilter !== "all" ||
+                          plotStageFilter !== "all") && (
+                          <Badge
+                            variant="secondary"
+                            className="h-5 px-1 text-[10px]"
+                          >
+                            {
+                              [
+                                plotHybridFilter !== "all",
+                                plotStageFilter !== "all",
+                              ].filter(Boolean).length
+                            }
+                          </Badge>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-64 p-3" align="end">
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">Hybrid</Label>
+                          <Select
+                            value={plotHybridFilter}
+                            onValueChange={setPlotHybridFilter}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="All Hybrids" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Hybrids</SelectItem>
+                              {Array.from(
+                                new Set(
+                                  selectedGrower.plots
+                                    .map(
+                                      (plotId) =>
+                                        MOCK_PLOTS.find((p) => p.id === plotId)
+                                          ?.hybrid,
+                                    )
+                                    .filter(Boolean),
+                                ),
+                              ).map((hybrid) => (
+                                <SelectItem key={hybrid} value={hybrid || ""}>
+                                  {hybrid}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            Current Stage
+                          </Label>
+                          <Select
+                            value={plotStageFilter}
+                            onValueChange={setPlotStageFilter}
+                          >
+                            <SelectTrigger className="h-8 text-xs">
+                              <SelectValue placeholder="All Stages" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Stages</SelectItem>
+                              {Array.from(
+                                new Set(
+                                  selectedGrower.plots
+                                    .map(
+                                      (plotId) =>
+                                        MOCK_PLOTS.find((p) => p.id === plotId)
+                                          ?.stage,
+                                    )
+                                    .filter(Boolean),
+                                ),
+                              ).map((stage) => (
+                                <SelectItem key={stage} value={stage || ""}>
+                                  {stage}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <Separator />
+
+                        {(plotHybridFilter !== "all" ||
+                          plotStageFilter !== "all") && (
+                          <>
+                            <Separator />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full text-xs"
+                              onClick={() => {
+                                setPlotHybridFilter("all");
+                                setPlotStageFilter("all");
+                              }}
+                            >
+                              Clear All
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div className="space-y-2">
                   {selectedGrower.plots
                     .map((plotId) => MOCK_PLOTS.find((p) => p.id === plotId))
                     .filter((plotData) => {
+                      // Search filter
+                      if (plotSearchQuery.trim()) {
+                        const query = plotSearchQuery.toLowerCase();
+                        const matchesSearch =
+                          plotData?.id.toLowerCase().includes(query) ||
+                          plotData?.hybrid.toLowerCase().includes(query) ||
+                          plotData?.stage.toLowerCase().includes(query);
+                        if (!matchesSearch) return false;
+                      }
+
+                      // Hybrid filter
                       if (
                         plotHybridFilter !== "all" &&
                         plotData?.hybrid !== plotHybridFilter
                       ) {
                         return false;
                       }
+
+                      // Stage filter
                       if (
                         plotStageFilter !== "all" &&
                         plotData?.stage !== plotStageFilter
                       ) {
                         return false;
                       }
+
                       return true;
                     })
                     .map((plotData) => {
@@ -1082,20 +2405,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                                     {plotData.hybrid}
                                   </p>
                                 </div>
-                                {/* Audit Status Badge - Commented Out */}
-                                {/* {plotData?.auditStatus === "audited" ? (
-                                  <Badge className="bg-[#4CAF50] hover:bg-[#4CAF50] text-white flex items-center gap-1 shrink-0">
-                                    <CheckCircle2 className="h-3 w-3" />
-                                    Audited
-                                  </Badge>
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="shrink-0 bg-slate-200 text-slate-700 hover:bg-slate-200"
-                                  >
-                                    Audit Pending
-                                  </Badge>
-                                )} */}
                               </div>
                               <div className="mt-2 grid grid-cols-2 gap-1 text-xs">
                                 <div className="bg-slate-50 rounded px-2 py-1">
@@ -1150,25 +2459,33 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             <Dialog
               open={isAddGrowerOpen}
               onOpenChange={(open) => {
-                setIsAddGrowerOpen(open);
-                setAddStep(1);
-                setSelectedCropType("Corn");
+                if (!open) {
+                  handleCloseDialog();
+                } else {
+                  setIsAddGrowerOpen(open);
+                }
               }}
             >
               <DialogContent className="max-w-full h-full m-0 rounded-none p-0">
-                <DialogTitle className="sr-only">Add New Grower</DialogTitle>
+                <DialogTitle className="sr-only">
+                  {editingGrowerId ? "Edit Grower" : "Add New Grower"}
+                </DialogTitle>
                 <DialogDescription className="sr-only">
-                  Wizard to add a new grower and their plots.
+                  {editingGrowerId
+                    ? "Edit the grower details"
+                    : "Wizard to add a new grower and their plots."}
                 </DialogDescription>
 
                 {/* Green Header matching AddPlotWizard */}
                 <div className="px-4 py-3 border-b bg-[rgb(76,175,80)] text-white flex justify-between items-center">
                   <div className="flex-1">
                     <h2 className="text-lg font-bold leading-none">
-                      Add New Grower
+                      {editingGrowerId ? "Edit Grower" : "Add New Grower"}
                     </h2>
                     <p className="text-xs text-[rgb(255,255,255)] mt-1">
-                      Fill in the grower details
+                      {editingGrowerId
+                        ? "Update grower details"
+                        : "Fill in the grower details"}
                     </p>
                   </div>
                 </div>
@@ -1183,15 +2500,18 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     <Button
                       variant="outline"
                       className="flex-1 h-10 text-sm"
-                      onClick={() => setIsAddGrowerOpen(false)}
+                      onClick={handleCloseDialog}
                     >
                       Cancel
                     </Button>
                     <Button
                       className="flex-1 h-10 bg-[#4CAF50] hover:bg-[#388E3C] text-sm"
-                      onClick={() => setIsAddGrowerOpen(false)}
+                      onClick={() => {
+                        /* TODO: Submit grower data */
+                        handleCloseDialog();
+                      }}
                     >
-                      Submit
+                      {editingGrowerId ? "Update" : "Submit"}
                     </Button>
                   </div>
                 </div>
@@ -1382,7 +2702,12 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             {filteredGrowers.map((grower) => (
               <Card
                 key={grower.id}
-                onClick={() => setSelectedGrower(grower)}
+                onClick={() => {
+                  setSelectedGrower(grower);
+                  setPlotHybridFilter("all");
+                  setPlotStageFilter("all");
+                  setPlotSearchQuery("");
+                }}
                 className={`cursor-pointer transition-all active:scale-[0.98] ${selectedGrower?.id === grower.id ? "border-[#10B981] ring-2 ring-[#10B981]/20 bg-green-50/50" : ""}`}
               >
                 <CardContent className="p-4 flex items-start gap-3">
