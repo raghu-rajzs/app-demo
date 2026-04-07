@@ -188,7 +188,7 @@ export function PlotTracker({
     }));
   };
 
-  const FIELD_STAGES = [
+  const CORN_FIELD_STAGES = [
     { id: "pre-sowing", label: "Pre-Sowing" },
     { id: "sowing", label: "Sowing" },
     { id: "vegetative", label: "Vegetative" },
@@ -199,6 +199,26 @@ export function PlotTracker({
     { id: "dispatch", label: "Dispatch" },
     { id: "ccp", label: "CCP" },
   ];
+
+  const RICE_FIELD_STAGES = [
+    { id: "area-measurement", label: "Area Measurement" },
+    { id: "field-preparation", label: "Field Preparation" },
+    { id: "sowing", label: "Sowing" },
+    { id: "transplanting", label: "Transplanting" },
+    { id: "isolation", label: "Isolation" },
+    { id: "fertilizer-management", label: "Fertilizer Management" },
+    { id: "chemical-application", label: "Chemical Application" },
+    { id: "agronomy", label: "Agronomy" },
+    { id: "ppi-observation", label: "PPI Observation" },
+    { id: "flowering", label: "Flowering" },
+    { id: "rouging", label: "Rouging" },
+    { id: "chopping-harvesting", label: "Chopping & Harvesting" },
+    { id: "dispatch", label: "Dispatch" },
+    { id: "post-dispatch", label: "Post Dispatch" },
+  ];
+
+  const FIELD_STAGES =
+    selectedPlot?.crop === "Rice" ? RICE_FIELD_STAGES : CORN_FIELD_STAGES;
 
   const [copiedPlotInitialData, setCopiedPlotInitialData] = useState<any>(null);
   const [copyPlotData, setCopyPlotData] = useState({
@@ -2409,6 +2429,875 @@ export function PlotTracker({
                   </div>
                 )}
 
+                {/* ── RICE STAGES ── */}
+
+                {/* Area Measurement */}
+                {activeFieldStage === "area-measurement" && (
+                  <div className="space-y-4 pt-2 border-t">
+                    <p className="text-xs text-slate-500">
+                      GPS field measurement is optional. You can proceed to
+                      other stages without measuring.
+                    </p>
+                    {!fieldStageData.preSowing.measured ? (
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => {
+                          updateStageField("preSowing", "measured", true);
+                          updateStageField("preSowing", "acreage", "2.30");
+                        }}
+                      >
+                        <MapIcon className="h-4 w-4" />
+                        Measure Field (GPS)
+                      </Button>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between p-3 bg-green-50 rounded-md border border-green-200">
+                          <div>
+                            <p className="text-xs text-slate-500">
+                              Measured Acreage
+                            </p>
+                            <p className="text-2xl font-bold text-[#4CAF50]">
+                              {fieldStageData.preSowing.acreage} acres
+                            </p>
+                          </div>
+                          <CheckCircle2 className="h-6 w-6 text-[#4CAF50]" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 mb-2">
+                            Field Preview on Map
+                          </p>
+                          <div className="w-full h-40 bg-slate-100 rounded-lg overflow-hidden border border-slate-200">
+                            <ImageWithFallback
+                              src={plotMapImage}
+                              alt="Field map preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => {
+                            updateStageField("preSowing", "measured", false);
+                            updateStageField("preSowing", "acreage", "");
+                          }}
+                        >
+                          Re-measure
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Field Preparation */}
+                {activeFieldStage === "field-preparation" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Irrigation Setup</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">SSP Application</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Puddling - 1st</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Puddling - 2nd</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Previous Parent</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        placeholder="Enter previous parent"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Sowing (Rice) */}
+                {activeFieldStage === "sowing" &&
+                  selectedPlot?.crop === "Rice" && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Parent Reference</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="Enter parent reference"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Female Sowing</Label>
+                        <Input className="h-9 text-sm" type="date" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Male Sowing</Label>
+                        <Input className="h-9 text-sm" type="date" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Sown Area</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                {/* Transplanting */}
+                {activeFieldStage === "transplanting" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Male Transplanting</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Female Transplanting</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Transplanted Area</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Expected Yield</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        step="0.01"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Isolation */}
+                {activeFieldStage === "isolation" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Isolation Distance</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Variety</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        placeholder="Enter variety"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Direction</Label>
+                      <Select>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="Select direction" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            "North",
+                            "South",
+                            "East",
+                            "West",
+                            "North-East",
+                            "North-West",
+                            "South-East",
+                            "South-West",
+                          ].map((d) => (
+                            <SelectItem key={d} value={d.toLowerCase()}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Sowing Date</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Transplanting Date</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Flowering Date</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Isolation Area</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Isolation Grade</Label>
+                      <Select>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["A", "B", "C", "D", "F"].map((g) => (
+                            <SelectItem key={g} value={g}>
+                              {g}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Fertilizer Management */}
+                {activeFieldStage === "fertilizer-management" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Basal Dose</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    {["1st", "2nd", "3rd", "Additional"].map((n) => (
+                      <div
+                        key={n}
+                        className="space-y-1.5 p-3 bg-slate-50 rounded-md border border-slate-200"
+                      >
+                        <p className="text-xs font-semibold text-slate-700">
+                          {n} Top Dressing
+                        </p>
+                        <Input
+                          className="h-9 text-sm"
+                          type="date"
+                          placeholder="Date"
+                        />
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="Crop condition"
+                        />
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="Input name"
+                        />
+                      </div>
+                    ))}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">
+                        Humivi-K Power Application
+                      </Label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="flex-1 py-2 rounded-md border text-sm font-medium bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                        >
+                          Yes
+                        </button>
+                        <button
+                          type="button"
+                          className="flex-1 py-2 rounded-md border text-sm font-medium bg-white text-slate-700 border-slate-300 hover:bg-slate-50"
+                        >
+                          No
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Chemical Application */}
+                {activeFieldStage === "chemical-application" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    {["1st", "2nd", "3rd", "4th", "Additional"].map((n) => (
+                      <div
+                        key={n}
+                        className="space-y-1.5 p-3 bg-slate-50 rounded-md border border-slate-200"
+                      >
+                        <p className="text-xs font-semibold text-slate-700">
+                          {n} Spray
+                        </p>
+                        <Input
+                          className="h-9 text-sm"
+                          type="date"
+                          placeholder="Date"
+                        />
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="Input name"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Agronomy */}
+                {activeFieldStage === "agronomy" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    {[
+                      "FN I",
+                      "FN II",
+                      "FN III",
+                      "FN IV (Feb I)",
+                      "FN IV (Mar I)",
+                      "FN IV (Mar II)",
+                    ].map((fn) => (
+                      <div key={fn} className="space-y-1.5">
+                        <Label className="text-xs">
+                          Crop Agronomic Condition - {fn}
+                        </Label>
+                        <Select>
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select condition" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Excellent", "Good", "Fair", "Poor"].map((c) => (
+                              <SelectItem key={c} value={c.toLowerCase()}>
+                                {c}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ))}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">
+                        Reason for Poor Crop Condition
+                      </Label>
+                      <Input
+                        className="h-9 text-sm"
+                        placeholder="Enter reason"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* PPI Observation */}
+                {activeFieldStage === "ppi-observation" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Male PPI</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Female PPI</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">PPI Status</Label>
+                      <Select>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Complete", "Partial", "Pending"].map((s) => (
+                            <SelectItem key={s} value={s.toLowerCase()}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Yield Estimation on PPI</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Agronomical Condition</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        placeholder="Enter condition"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Irrigation Water Status</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        placeholder="Select or enter status"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Nick Adjustment</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        placeholder="Enter nick adjustment"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Standard Acre</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Expected Yield</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Flowering (Rice) */}
+                {activeFieldStage === "flowering" &&
+                  selectedPlot?.crop === "Rice" && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Female Flowering</Label>
+                          <Input className="h-9 text-sm" type="date" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Male Flowering</Label>
+                          <Input className="h-9 text-sm" type="date" />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Parental Synchrony</Label>
+                        <Select>
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              "Synchronized",
+                              "Early Male",
+                              "Late Male",
+                              "Early Female",
+                              "Late Female",
+                            ].map((s) => (
+                              <SelectItem
+                                key={s}
+                                value={s.toLowerCase().replace(/ /g, "-")}
+                              >
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Crop Condition</Label>
+                        <Select>
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Excellent", "Good", "Fair", "Poor"].map((c) => (
+                              <SelectItem key={c} value={c.toLowerCase()}>
+                                {c}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">
+                          Reason for Synchrony Mismatch
+                        </Label>
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="Enter reason"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Expected Seed Setting</Label>
+                        <Input className="h-9 text-sm" placeholder="0" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          "GA3 - 1st",
+                          "GA3 - 2nd",
+                          "GA3 - 3rd",
+                          "Additional GA3",
+                        ].map((g) => (
+                          <div key={g} className="space-y-1.5">
+                            <Label className="text-xs">{g}</Label>
+                            <Input className="h-9 text-sm" type="date" />
+                          </div>
+                        ))}
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">
+                          Seed Setting at Maturity
+                        </Label>
+                        <Input className="h-9 text-sm" placeholder="0" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Expected Yield</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Standard Acre</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Rouging */}
+                {activeFieldStage === "rouging" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    {[
+                      { label: "1st Vegetative Rouging", hasGrade: true },
+                      { label: "Vegetative Rouging Date", hasGrade: false },
+                      { label: "2nd Vegetative Rouging", hasGrade: true },
+                      { label: "Pre-Flowering Rouging", hasGrade: true },
+                    ].map(({ label, hasGrade }) => (
+                      <div
+                        key={label}
+                        className={`space-y-1.5 ${hasGrade ? "p-3 bg-slate-50 rounded-md border border-slate-200" : ""}`}
+                      >
+                        <Label className="text-xs">{label}</Label>
+                        <Input className="h-9 text-sm" type="date" />
+                        {hasGrade && (
+                          <Select>
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Select grade" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["A", "B", "C", "D", "F"].map((g) => (
+                                <SelectItem key={g} value={g}>
+                                  {g}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
+                    ))}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold">
+                        Flowering Daily Rouging
+                      </Label>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border border-slate-200 rounded-md overflow-hidden">
+                          <thead className="bg-slate-50">
+                            <tr>
+                              {[
+                                "Date",
+                                "Off-type Male",
+                                "Off-type Female",
+                                "Remarks",
+                              ].map((h) => (
+                                <th
+                                  key={h}
+                                  className="px-2 py-1.5 text-left font-semibold text-slate-600 border-b border-slate-200"
+                                >
+                                  {h}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr className="border-b border-slate-100">
+                              <td className="px-2 py-1">
+                                <Input className="h-7 text-xs" type="date" />
+                              </td>
+                              <td className="px-2 py-1">
+                                <Input
+                                  className="h-7 text-xs"
+                                  type="number"
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="px-2 py-1">
+                                <Input
+                                  className="h-7 text-xs"
+                                  type="number"
+                                  placeholder="0"
+                                />
+                              </td>
+                              <td className="px-2 py-1">
+                                <Input
+                                  className="h-7 text-xs"
+                                  placeholder="—"
+                                />
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full text-xs h-8"
+                      >
+                        + Add Row
+                      </Button>
+                    </div>
+                    {["Pre-Final Rouging", "Final Rouging"].map((label) => (
+                      <div key={label} className="space-y-1.5">
+                        <Label className="text-xs font-semibold">{label}</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[
+                            "Off-type Male",
+                            "Off-type Female",
+                            "Volunteer Plants",
+                            "Grade",
+                          ].map((col) => (
+                            <div key={col} className="space-y-1">
+                              <p className="text-[10px] text-slate-500">
+                                {col}
+                              </p>
+                              {col === "Grade" ? (
+                                <Select>
+                                  <SelectTrigger className="h-8 text-xs">
+                                    <SelectValue placeholder="Grade" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {["A", "B", "C", "D", "F"].map((g) => (
+                                      <SelectItem key={g} value={g}>
+                                        {g}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : (
+                                <Input
+                                  className="h-8 text-xs"
+                                  type="number"
+                                  placeholder="0"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="p-3 bg-green-50 rounded-md border border-green-200 space-y-2">
+                      <p className="text-xs font-semibold text-slate-700">
+                        Rouging Summary
+                      </p>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        {["Total Rouged", "Avg / Day", "Final Grade"].map(
+                          (m) => (
+                            <div
+                              key={m}
+                              className="bg-white rounded-md border border-slate-200 p-2"
+                            >
+                              <p className="text-[10px] text-slate-500">{m}</p>
+                              <p className="text-sm font-bold text-slate-800">
+                                —
+                              </p>
+                            </div>
+                          ),
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Chopping & Harvesting */}
+                {activeFieldStage === "chopping-harvesting" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Male Chopping</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Female Harvesting</Label>
+                      <Input className="h-9 text-sm" type="date" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Harvested Area</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">
+                        Quality Grade on Harvesting
+                      </Label>
+                      <Select>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["A", "B", "C", "D", "F"].map((g) => (
+                            <SelectItem key={g} value={g}>
+                              {g}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Yield Estimation</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Dispatch (Rice) */}
+                {activeFieldStage === "dispatch" &&
+                  selectedPlot?.crop === "Rice" && (
+                    <div className="space-y-3 pt-2 border-t">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Dispatch Date</Label>
+                          <Input className="h-9 text-sm" type="date" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Dispatch Time</Label>
+                          <Input className="h-9 text-sm" type="time" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Dispatch Bags</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">
+                            Dispatch Qty (approx.)
+                          </Label>
+                          <Input
+                            className="h-9 text-sm"
+                            type="number"
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Dispatch Area</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          placeholder="0"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Vehicle Number</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          placeholder="e.g. MH01AB1234"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Moisture %</Label>
+                        <Input
+                          className="h-9 text-sm"
+                          type="number"
+                          step="0.1"
+                          placeholder="0.0"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Final Grade</Label>
+                        <Select>
+                          <SelectTrigger className="h-9 text-sm">
+                            <SelectValue placeholder="Select grade" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["A", "B", "C", "D", "F"].map((g) => (
+                              <SelectItem key={g} value={g}>
+                                {g}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">SDN Number</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            placeholder="Enter SDN"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">LR Number</Label>
+                          <Input
+                            className="h-9 text-sm"
+                            placeholder="Enter LR"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Post Dispatch */}
+                {activeFieldStage === "post-dispatch" && (
+                  <div className="space-y-3 pt-2 border-t">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Received Quantity</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Moisture at Plant (%)</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        step="0.1"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Remnant</Label>
+                      <Input className="h-9 text-sm" placeholder="0" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Physical Purity Loss</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs">Condition Quantity</Label>
+                      <Input
+                        className="h-9 text-sm"
+                        type="number"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Field Summary Dialog */}
                 <Dialog
                   open={isFieldSummaryOpen}
@@ -4025,13 +4914,31 @@ export function PlotTracker({
             className="flex items-center gap-2 pb-1"
             style={{ minWidth: "max-content" }}
           >
-            {[
-              { id: "Sowing", label: "Sowing" },
-              { id: "Vegetative", label: "Vegetative / Transplanting" },
-              { id: "Flowering", label: "Flowering" },
-              { id: "Harvest", label: "Harvest" },
-              { id: "Dispatch", label: "Dispatch" },
-            ].map((stage) => {
+            {(filters.crop === "rice"
+              ? [
+                  { id: "Sowing", label: "Sowing" },
+                  { id: "Transplanting", label: "Transplanting" },
+                  { id: "PPI", label: "PPI" },
+                  { id: "Flowering", label: "Flowering" },
+                  { id: "Harvest", label: "Harvest" },
+                  { id: "Dispatch", label: "Dispatch" },
+                ]
+              : filters.crop === "corn"
+                ? [
+                    { id: "Sowing", label: "Sowing" },
+                    { id: "Vegetative", label: "Vegetative" },
+                    { id: "Detassling", label: "Detassling" },
+                    { id: "Harvest", label: "Harvest" },
+                    { id: "Dispatch", label: "Dispatch" },
+                  ]
+                : [
+                    { id: "Sowing", label: "Sowing" },
+                    { id: "Vegetative", label: "Vegetative / Transplanting" },
+                    { id: "Flowering", label: "Flowering" },
+                    { id: "Harvest", label: "Harvest" },
+                    { id: "Dispatch", label: "Dispatch" },
+                  ]
+            ).map((stage) => {
               const isActive = activeStagePill === stage.id;
               return (
                 <button
@@ -4126,7 +5033,14 @@ export function PlotTracker({
                     {/* Main content */}
                     <div
                       className="flex-1 min-w-0 p-3"
-                      onClick={() => setSelectedPlot(plot)}
+                      onClick={() => {
+                        setSelectedPlot(plot);
+                        setActiveFieldStage(
+                          plot.crop === "Rice"
+                            ? "area-measurement"
+                            : "pre-sowing",
+                        );
+                      }}
                     >
                       <div className="flex items-start gap-2 mb-0.5">
                         <h3 className="font-semibold text-sm truncate font-mono text-slate-800">
