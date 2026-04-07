@@ -122,7 +122,8 @@ export function FieldAdditionPage({
     { id: "post-dispatch", label: "Post Dispatch" },
   ];
 
-  const FIELD_STAGES = formData.crop === "rice" ? RICE_FIELD_STAGES : CORN_FIELD_STAGES;
+  const FIELD_STAGES =
+    formData.crop === "rice" ? RICE_FIELD_STAGES : CORN_FIELD_STAGES;
 
   // Search for existing grower
   const handleSearchGrower = () => {
@@ -481,7 +482,8 @@ export function FieldAdditionPage({
                     setFormData({
                       ...formData,
                       crop: v,
-                      currentStage: v === "rice" ? "Area Measurement" : "Pre-Sowing",
+                      currentStage:
+                        v === "rice" ? "Area Measurement" : "Pre-Sowing",
                     })
                   }
                 >
