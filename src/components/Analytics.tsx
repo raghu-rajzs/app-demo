@@ -231,9 +231,10 @@ export function Analytics({
       iconColor: "#2e7d32",
       alerts: { overdue: 2, today: 5, upcoming: 12 },
     },
+    // Control variable: set to false to show "Vegetative / Transplanting" instead of just "Transplanting"
     {
       id: "vegetative",
-      label: "Vegetative / Transplanting",
+      label: "Transplanting",
       icon: <Leaf style={{ width: "15px", height: "15px" }} />,
       acreageLabel: "Standing Acre",
       acreage: 67.5,
@@ -433,7 +434,7 @@ export function Analytics({
           <SelectContent>
             <SelectItem value="All Stages">All Stages</SelectItem>
             <SelectItem value="Sowing">Sowing</SelectItem>
-            <SelectItem value="Vegetative">Vegetative</SelectItem>
+            <SelectItem value="Transplanting">Transplanting</SelectItem>
             <SelectItem value="Flowering">Flowering</SelectItem>
             <SelectItem value="Harvest">Harvest</SelectItem>
             <SelectItem value="Dispatch">Dispatch</SelectItem>

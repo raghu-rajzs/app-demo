@@ -188,10 +188,24 @@ export function PlotTracker({
     }));
   };
 
+  // Control variable: set to false to show "Vegetative" instead of "Transplanting"
+  const DISPLAY_TRANSPLANTING_LABEL = true;
+
+  // Helper function to map stage values to display labels
+  const getStageDisplayLabel = (stageValue: string): string => {
+    if (stageValue === "Vegetative" && DISPLAY_TRANSPLANTING_LABEL) {
+      return "Transplanting";
+    }
+    return stageValue;
+  };
+
   const CORN_FIELD_STAGES = [
     { id: "pre-sowing", label: "Pre-Sowing" },
     { id: "sowing", label: "Sowing" },
-    { id: "vegetative", label: "Vegetative" },
+    {
+      id: "vegetative",
+      label: DISPLAY_TRANSPLANTING_LABEL ? "Transplanting" : "Vegetative",
+    },
     { id: "flowering", label: "Flowering" },
     { id: "quality", label: "Quality" },
     { id: "pre-harvest", label: "Pre-Harvest" },
@@ -839,7 +853,7 @@ export function PlotTracker({
                   <div>
                     <p className="text-xs text-slate-500">Crop Stage</p>
                     <p className="font-medium text-slate-900">
-                      {selectedPlot.stage}
+                      {getStageDisplayLabel(selectedPlot.stage)}
                     </p>
                   </div>
                   <div>
@@ -4933,7 +4947,7 @@ export function PlotTracker({
                   ]
                 : [
                     { id: "Sowing", label: "Sowing" },
-                    { id: "Vegetative", label: "Vegetative / Transplanting" },
+                    { id: "Vegetative", label: "Transplanting" },
                     { id: "Flowering", label: "Flowering" },
                     { id: "Harvest", label: "Harvest" },
                     { id: "Dispatch", label: "Dispatch" },
@@ -5058,7 +5072,7 @@ export function PlotTracker({
                       {plot.stage && (
                         <div className="mt-1.5">
                           <span className="text-xs bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
-                            {plot.stage}
+                            {getStageDisplayLabel(plot.stage)}
                           </span>
                         </div>
                       )}

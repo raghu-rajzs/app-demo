@@ -92,11 +92,17 @@ export function FieldAdditionPage({
 
   const [selectedCropType, setSelectedCropType] = useState("");
 
+  // Control variable: set to false to show "Vegetative" instead of "Transplanting"
+  const DISPLAY_TRANSPLANTING_LABEL = true;
+
   // Field stages — dynamic based on crop
   const CORN_FIELD_STAGES = [
     { id: "pre-sowing", label: "Pre-Sowing" },
     { id: "sowing", label: "Sowing" },
-    { id: "vegetative", label: "Vegetative" },
+    {
+      id: "vegetative",
+      label: DISPLAY_TRANSPLANTING_LABEL ? "Transplanting" : "Vegetative",
+    },
     { id: "flowering", label: "Flowering" },
     { id: "quality", label: "Quality" },
     { id: "pre-harvest", label: "Pre-Harvest" },

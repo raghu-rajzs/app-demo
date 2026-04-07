@@ -449,10 +449,24 @@ export function Growers({
     }));
   };
 
+  // Control variable: set to false to show "Vegetative" instead of "Transplanting"
+  const DISPLAY_TRANSPLANTING_LABEL = true;
+
+  // Helper function to map stage values to display labels
+  const getStageDisplayLabel = (stageValue: string): string => {
+    if (stageValue === "Vegetative" && DISPLAY_TRANSPLANTING_LABEL) {
+      return "Transplanting";
+    }
+    return stageValue;
+  };
+
   const CORN_FIELD_STAGES = [
     { id: "pre-sowing", label: "Pre-Sowing" },
     { id: "sowing", label: "Sowing" },
-    { id: "vegetative", label: "Vegetative" },
+    {
+      id: "vegetative",
+      label: DISPLAY_TRANSPLANTING_LABEL ? "Transplanting" : "Vegetative",
+    },
     { id: "flowering", label: "Flowering" },
     { id: "quality", label: "Quality" },
     { id: "pre-harvest", label: "Pre-Harvest" },
@@ -718,7 +732,7 @@ export function Growers({
                     <div>
                       <p className="text-xs text-slate-500">Crop Stage</p>
                       <p className="font-medium text-slate-900">
-                        {selectedPlot.stage}
+                        {getStageDisplayLabel(selectedPlot.stage)}
                       </p>
                     </div>
                     <div>
