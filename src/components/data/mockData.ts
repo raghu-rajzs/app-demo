@@ -15,6 +15,8 @@ export type Plot = {
   growerId: string;
   growerName: string;
   village: string;
+  unit: string;
+  location: string;
   acreage: number;
   crop: "Corn" | "Rice" | "Cotton";
   hybrid: string;
@@ -372,6 +374,8 @@ function generatePlots(growers: Grower[]): Plot[] {
       growerId: grower.id,
       growerName: grower.name,
       village,
+      unit: grower.unit,
+      location: grower.location,
       acreage: parseFloat((0.5 + Math.random() * 4.5).toFixed(1)),
       crop,
       hybrid,

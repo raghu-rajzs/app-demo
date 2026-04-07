@@ -312,9 +312,8 @@ export function PlotTracker({
   const [filters, setFilters] = useState({
     grower: "all",
     assignedFieldAssistant: "all",
-    state: "all",
-    district: "all",
-    taluka: "all",
+    unit: "all",
+    location: "all",
     village: "all",
     crop: "all",
     hybrid: "all",
@@ -327,6 +326,57 @@ export function PlotTracker({
     initialAuditFilter,
   );
 
+  // Helper functions to get unique values for dropdowns
+  const getUniqueUnits = () => {
+    const units = [...new Set(MOCK_PLOTS.map((p) => p.unit))];
+    return units.sort();
+  };
+
+  const getUniqueLocations = () => {
+    const locations = [
+      ...new Set(
+        MOCK_PLOTS.filter(
+          (p) =>
+            filters.unit === "all" ||
+            p.unit?.toLowerCase() === filters.unit.toLowerCase(),
+        ).map((p) => p.location),
+      ),
+    ];
+    return locations.sort();
+  };
+
+  const getUniqueVillages = () => {
+    const villages = [
+      ...new Set(
+        MOCK_PLOTS.filter(
+          (p) =>
+            (filters.unit === "all" ||
+              p.unit?.toLowerCase() === filters.unit.toLowerCase()) &&
+            (filters.location === "all" ||
+              p.location?.toLowerCase() === filters.location.toLowerCase()),
+        ).map((p) => p.village),
+      ),
+    ];
+    return villages.sort();
+  };
+
+  const getUniqueHybrids = () => {
+    const hybrids = [
+      ...new Set(
+        MOCK_PLOTS.filter(
+          (p) =>
+            (filters.unit === "all" ||
+              p.unit?.toLowerCase() === filters.unit.toLowerCase()) &&
+            (filters.location === "all" ||
+              p.location?.toLowerCase() === filters.location.toLowerCase()) &&
+            (filters.village === "all" ||
+              p.village?.toLowerCase() === filters.village.toLowerCase()),
+        ).map((p) => p.hybrid),
+      ),
+    ];
+    return hybrids.sort();
+  };
+
   // Stage pill filter (replacing old All/Measured/Pending tabs)
   const [activeStagePill, setActiveStagePill] = useState<string>(
     initialStageFilter !== "all" ? initialStageFilter : "Sowing",
@@ -338,9 +388,8 @@ export function PlotTracker({
   const activeFilterCount = [
     filters.grower !== "all",
     filters.assignedFieldAssistant !== "all",
-    filters.state !== "all",
-    filters.district !== "all",
-    filters.taluka !== "all",
+    filters.unit !== "all",
+    filters.location !== "all",
     filters.village !== "all",
     filters.crop !== "all",
     filters.hybrid !== "all",
@@ -353,28 +402,26 @@ export function PlotTracker({
     if (filters.grower !== "all" && plot.growerId !== filters.grower)
       return false;
     if (filters.assignedFieldAssistant !== "all") return false; // Add field assistant matching when data is available
-    if (filters.state !== "all" && plot.state?.toLowerCase() !== filters.state)
-      return false;
     if (
-      filters.district !== "all" &&
-      plot.district?.toLowerCase() !== filters.district
+      filters.unit !== "all" &&
+      plot.unit?.toLowerCase() !== filters.unit.toLowerCase()
     )
       return false;
     if (
-      filters.taluka !== "all" &&
-      plot.taluka?.toLowerCase() !== filters.taluka
+      filters.location !== "all" &&
+      plot.location?.toLowerCase() !== filters.location.toLowerCase()
     )
       return false;
     if (
       filters.village !== "all" &&
-      plot.village?.toLowerCase() !== filters.village
+      plot.village?.toLowerCase() !== filters.village.toLowerCase()
     )
       return false;
     if (filters.crop !== "all" && plot.crop?.toLowerCase() !== filters.crop)
       return false;
     if (
       filters.hybrid !== "all" &&
-      plot.hybrid?.toLowerCase() !== filters.hybrid
+      plot.hybrid?.toLowerCase() !== filters.hybrid.toLowerCase()
     )
       return false;
     if (filters.currentStage !== "all" && plot.stage !== filters.currentStage)
@@ -3682,76 +3729,55 @@ export function PlotTracker({
 
                   <Separator />
 
-                  {/* State Filter */}
+                  {/* Unit Filter */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">State</Label>
+                    <Label className="text-sm font-medium">Unit</Label>
                     <Select
-                      value={filters.state}
-                      onValueChange={(v) =>
-                        setFilters({ ...filters, state: v })
-                      }
+                      value={filters.unit}
+                      onValueChange={(v) => {
+                        setFilters({
+                          ...filters,
+                          unit: v,
+                          location: "all",
+                          village: "all",
+                        });
+                      }}
                     >
                       <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select state" />
+                        <SelectValue placeholder="Select unit" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All States</SelectItem>
-                        <SelectItem value="punjab">Punjab</SelectItem>
-                        <SelectItem value="haryana">Haryana</SelectItem>
-                        <SelectItem value="maharashtra">Maharashtra</SelectItem>
-                        <SelectItem value="karnataka">Karnataka</SelectItem>
-                        <SelectItem value="uttar pradesh">
-                          Uttar Pradesh
-                        </SelectItem>
+                        <SelectItem value="all">All Units</SelectItem>
+                        {getUniqueUnits().map((unit) => (
+                          <SelectItem key={unit} value={unit}>
+                            {unit}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <Separator />
 
-                  {/* District Filter */}
+                  {/* Location Filter */}
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">District</Label>
+                    <Label className="text-sm font-medium">Location</Label>
                     <Select
-                      value={filters.district}
-                      onValueChange={(v) =>
-                        setFilters({ ...filters, district: v })
-                      }
+                      value={filters.location}
+                      onValueChange={(v) => {
+                        setFilters({ ...filters, location: v, village: "all" });
+                      }}
                     >
                       <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select district" />
+                        <SelectValue placeholder="Select location" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Districts</SelectItem>
-                        <SelectItem value="amritsar">Amritsar</SelectItem>
-                        <SelectItem value="ludhiana">Ludhiana</SelectItem>
-                        <SelectItem value="jalandhar">Jalandhar</SelectItem>
-                        <SelectItem value="patiala">Patiala</SelectItem>
-                        <SelectItem value="bathinda">Bathinda</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <Separator />
-
-                  {/* Taluka Filter */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium">Taluka</Label>
-                    <Select
-                      value={filters.taluka}
-                      onValueChange={(v) =>
-                        setFilters({ ...filters, taluka: v })
-                      }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue placeholder="Select taluka" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Talukas</SelectItem>
-                        <SelectItem value="beas">Beas</SelectItem>
-                        <SelectItem value="ajnala">Ajnala</SelectItem>
-                        <SelectItem value="majitha">Majitha</SelectItem>
-                        <SelectItem value="tarn-taran">Tarn Taran</SelectItem>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {getUniqueLocations().map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -3772,10 +3798,36 @@ export function PlotTracker({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">All Villages</SelectItem>
-                        <SelectItem value="rampur">Rampur</SelectItem>
-                        <SelectItem value="sultanpur">Sultanpur</SelectItem>
-                        <SelectItem value="khanna">Khanna</SelectItem>
-                        <SelectItem value="moga">Moga</SelectItem>
+                        {getUniqueVillages().map((village) => (
+                          <SelectItem key={village} value={village}>
+                            {village}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Separator />
+
+                  {/* Hybrid Filter */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Hybrid</Label>
+                    <Select
+                      value={filters.hybrid}
+                      onValueChange={(v) =>
+                        setFilters({ ...filters, hybrid: v })
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue placeholder="Select hybrid" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Hybrids</SelectItem>
+                        {getUniqueHybrids().map((hybrid) => (
+                          <SelectItem key={hybrid} value={hybrid}>
+                            {hybrid}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -3882,9 +3934,8 @@ export function PlotTracker({
                     setFilters({
                       grower: "all",
                       assignedFieldAssistant: "all",
-                      state: "all",
-                      district: "all",
-                      taluka: "all",
+                      unit: "all",
+                      location: "all",
                       village: "all",
                       crop: "all",
                       hybrid: "all",
