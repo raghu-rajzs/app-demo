@@ -92,8 +92,8 @@ export function FieldAdditionPage({
 
   const [selectedCropType, setSelectedCropType] = useState("");
 
-  // Field stages
-  const FIELD_STAGES = [
+  // Field stages — dynamic based on crop
+  const CORN_FIELD_STAGES = [
     { id: "pre-sowing", label: "Pre-Sowing" },
     { id: "sowing", label: "Sowing" },
     { id: "vegetative", label: "Vegetative" },
@@ -104,6 +104,25 @@ export function FieldAdditionPage({
     { id: "dispatch", label: "Dispatch" },
     { id: "ccp", label: "CCP" },
   ];
+
+  const RICE_FIELD_STAGES = [
+    { id: "area-measurement", label: "Area Measurement" },
+    { id: "field-preparation", label: "Field Preparation" },
+    { id: "sowing", label: "Sowing" },
+    { id: "transplanting", label: "Transplanting" },
+    { id: "isolation", label: "Isolation" },
+    { id: "fertilizer-management", label: "Fertilizer Management" },
+    { id: "chemical-application", label: "Chemical Application" },
+    { id: "agronomy", label: "Agronomy" },
+    { id: "ppi-observation", label: "PPI Observation" },
+    { id: "flowering", label: "Flowering" },
+    { id: "rouging", label: "Rouging" },
+    { id: "chopping-harvesting", label: "Chopping & Harvesting" },
+    { id: "dispatch", label: "Dispatch" },
+    { id: "post-dispatch", label: "Post Dispatch" },
+  ];
+
+  const FIELD_STAGES = formData.crop === "rice" ? RICE_FIELD_STAGES : CORN_FIELD_STAGES;
 
   // Search for existing grower
   const handleSearchGrower = () => {
@@ -458,7 +477,13 @@ export function FieldAdditionPage({
                 </Label>
                 <Select
                   value={formData.crop}
-                  onValueChange={(v) => setFormData({ ...formData, crop: v })}
+                  onValueChange={(v) =>
+                    setFormData({
+                      ...formData,
+                      crop: v,
+                      currentStage: v === "rice" ? "Area Measurement" : "Pre-Sowing",
+                    })
+                  }
                 >
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select crop" />
