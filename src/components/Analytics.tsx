@@ -50,6 +50,150 @@ export function Analytics({
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterVillage, setFilterVillage] = useState("all");
 
+  // Cascading filter data structure
+  const filterHierarchy = {
+    territoryManager: {
+      "tm-001": {
+        hybrids: ["dkc-9144", "p3396"],
+        villages: ["rampur", "lakhanpur"],
+      },
+      "tm-002": {
+        hybrids: ["nk-6240", "9001-gold"],
+        villages: ["sultanpur", "govindpur"],
+      },
+      "tm-003": {
+        hybrids: ["pioneer-3396", "dkc-9144"],
+        villages: ["rampur", "sultanpur"],
+      },
+      "tm-004": {
+        hybrids: ["p3396", "9001-gold"],
+        villages: ["lakhanpur", "govindpur"],
+      },
+    },
+    fdo: {
+      "fdo-001": {
+        hybrids: ["dkc-9144", "nk-6240"],
+        villages: ["rampur", "govindpur"],
+      },
+      "fdo-002": {
+        hybrids: ["p3396", "pioneer-3396"],
+        villages: ["lakhanpur", "sultanpur"],
+      },
+      "fdo-003": {
+        hybrids: ["9001-gold", "dkc-9144"],
+        villages: ["rampur", "sultanpur"],
+      },
+      "fdo-004": {
+        hybrids: ["nk-6240", "pioneer-3396"],
+        villages: ["lakhanpur", "govindpur"],
+      },
+    },
+    hybrid: {
+      "dkc-9144": {
+        villages: ["rampur", "lakhanpur", "sultanpur"],
+        units: ["unit-north", "unit-south"],
+        locations: ["location-a", "location-b"],
+      },
+      p3396: {
+        villages: ["rampur", "Sultan pur", "govindpur"],
+        units: ["unit-east", "unit-west"],
+        locations: ["location-b", "location-c"],
+      },
+      "nk-6240": {
+        villages: ["sultanpur", "govindpur", "lakhanpur"],
+        units: ["unit-north", "unit-east"],
+        locations: ["location-a", "location-c"],
+      },
+      "9001-gold": {
+        villages: ["lakhanpur", "govindpur", "rampur"],
+        units: ["unit-south", "unit-west"],
+        locations: ["location-c"],
+      },
+      "pioneer-3396": {
+        villages: ["rampur", "sultanpur", "govindpur"],
+        units: ["unit-north", "unit-south"],
+        locations: ["location-a", "location-b"],
+      },
+    },
+  };
+
+  // Compute available options based on selections
+  const getAvailableHybrids = () => {
+    let available = [
+      "dkc-9144",
+      "p3396",
+      "nk-6240",
+      "9001-gold",
+      "pioneer-3396",
+    ];
+
+    if (role === "FDO" && filterTerritoryManager !== "all") {
+      available = available.filter((h) =>
+        filterHierarchy.territoryManager[
+          filterTerritoryManager as string
+        ]?.hybrids.includes(h),
+      );
+    }
+
+    if (role === "Territory Manager" && filterFDO !== "all") {
+      available = available.filter((h) =>
+        filterHierarchy.fdo[filterFDO as string]?.hybrids.includes(h),
+      );
+    }
+
+    return available;
+  };
+
+  const getAvailableVillages = () => {
+    let available = ["rampur", "lakhanpur", "sultanpur", "govindpur"];
+
+    if (role === "FDO" && filterTerritoryManager !== "all") {
+      available = available.filter((v) =>
+        filterHierarchy.territoryManager[
+          filterTerritoryManager as string
+        ]?.villages.includes(v),
+      );
+    }
+
+    if (role === "Territory Manager" && filterFDO !== "all") {
+      available = available.filter((v) =>
+        filterHierarchy.fdo[filterFDO as string]?.villages.includes(v),
+      );
+    }
+
+    if (hybridType !== "all") {
+      available = available.filter((v) =>
+        filterHierarchy.hybrid[hybridType as string]?.villages.includes(v),
+      );
+    }
+
+    return available;
+  };
+
+  const getAvailableUnits = () => {
+    let available = ["unit-north", "unit-south", "unit-east", "unit-west"];
+
+    if (hybridType !== "all") {
+      available = available.filter((u) =>
+        filterHierarchy.hybrid[hybridType as string]?.units.includes(u),
+      );
+    }
+
+    return available;
+  };
+
+  const getAvailableLocations = () => {
+    let available = ["location-a", "location-b", "location-c"];
+
+    if (hybridType !== "all") {
+      available = available.filter((l) =>
+        filterHierarchy.hybrid[hybridType as string]?.locations.includes(l),
+      );
+    }
+
+    return available;
+  };
+
   const visibleFilters =
     role === "FDO"
       ? ["territoryManager", "hybrid", "village"]
@@ -59,6 +203,11 @@ export function Analytics({
 
   const activeFilterCount = [
     hybridType !== "all" ? 1 : 0,
+    visibleFilters.includes("territoryManager") &&
+    filterTerritoryManager !== "all"
+      ? 1
+      : 0,
+    visibleFilters.includes("fdo") && filterFDO !== "all" ? 1 : 0,
     visibleFilters.includes("unit") && filterUnit !== "all" ? 1 : 0,
     visibleFilters.includes("location") && filterLocation !== "all" ? 1 : 0,
     visibleFilters.includes("village") && filterVillage !== "all" ? 1 : 0,
@@ -764,12 +913,41 @@ export function Analytics({
               <div
                 style={{
                   marginBottom: "10px",
-                  fontSize: "11px",
-                  color: "#555",
-                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "baseline",
+                  gap: "4px",
                 }}
               >
-                PLD: {stage.pld} Acre
+                <span
+                  style={{
+                    fontSize: "9px",
+                    color: "#888",
+                    fontWeight: 600,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.5px",
+                  }}
+                >
+                  PLD:
+                </span>
+                <span
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: 800,
+                    color: "#1a1a1a",
+                    lineHeight: 1,
+                  }}
+                >
+                  {stage.pld}
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    color: "#666",
+                    fontWeight: 500,
+                  }}
+                >
+                  Acre
+                </span>
               </div>
 
               {/* Status Pills */}
@@ -993,6 +1171,8 @@ export function Analytics({
               <button
                 onClick={() => {
                   setHybridType("all");
+                  setFilterTerritoryManager("all");
+                  setFilterFDO("all");
                   setFilterUnit("all");
                   setFilterLocation("all");
                   setFilterVillage("all");
@@ -1007,89 +1187,200 @@ export function Analytics({
             </SheetDescription>
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {/* Territory Manager Filter — FDO only */}
+            {visibleFilters.includes("territoryManager") && (
+              <div>
+                <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                  Territory Manager
+                </label>
+                <Select
+                  value={filterTerritoryManager}
+                  onValueChange={(value) => {
+                    setFilterTerritoryManager(value);
+                    // Reset dependent filters
+                    setHybridType("all");
+                    setFilterVillage("all");
+                  }}
+                >
+                  <SelectTrigger className="h-10 bg-white border-slate-300">
+                    <SelectValue placeholder="All Territory Managers" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Territory Managers</SelectItem>
+                    <SelectItem value="tm-001">TM - Rajesh Kumar</SelectItem>
+                    <SelectItem value="tm-002">TM - Suresh Patel</SelectItem>
+                    <SelectItem value="tm-003">TM - Amit Singh</SelectItem>
+                    <SelectItem value="tm-004">TM - Vijay Sharma</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* FDO Filter — Territory Manager only */}
+            {visibleFilters.includes("fdo") && (
+              <div>
+                <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                  FDO
+                </label>
+                <Select
+                  value={filterFDO}
+                  onValueChange={(value) => {
+                    setFilterFDO(value);
+                    // Reset dependent filters
+                    setHybridType("all");
+                    setFilterVillage("all");
+                  }}
+                >
+                  <SelectTrigger className="h-10 bg-white border-slate-300">
+                    <SelectValue placeholder="All FDOs" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All FDOs</SelectItem>
+                    <SelectItem value="fdo-001">FDO - Ramesh Yadav</SelectItem>
+                    <SelectItem value="fdo-002">FDO - Manoj Gupta</SelectItem>
+                    <SelectItem value="fdo-003">FDO - Anil Verma</SelectItem>
+                    <SelectItem value="fdo-004">FDO - Sanjay Joshi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Hybrid */}
             <div>
               <label className="text-sm font-semibold text-slate-900 mb-2 block">
                 Hybrid
               </label>
-              <Select value={hybridType} onValueChange={setHybridType}>
+              <Select
+                value={hybridType}
+                onValueChange={(value) => {
+                  setHybridType(value);
+                  // Reset dependent filters
+                  setFilterVillage("all");
+                  setFilterUnit("all");
+                  setFilterLocation("all");
+                }}
+              >
                 <SelectTrigger className="h-10 bg-white border-slate-300">
                   <SelectValue placeholder="All Hybrids" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Hybrids</SelectItem>
-                  <SelectItem value="dkc-9144">DKC 9144</SelectItem>
-                  <SelectItem value="p3396">P 3396</SelectItem>
-                  <SelectItem value="nk-6240">NK 6240</SelectItem>
-                  <SelectItem value="9001-gold">9001 GOLD</SelectItem>
-                  <SelectItem value="pioneer-3396">Pioneer 3396</SelectItem>
+                  {getAvailableHybrids().includes("dkc-9144") && (
+                    <SelectItem value="dkc-9144">DKC 9144</SelectItem>
+                  )}
+                  {getAvailableHybrids().includes("p3396") && (
+                    <SelectItem value="p3396">P 3396</SelectItem>
+                  )}
+                  {getAvailableHybrids().includes("nk-6240") && (
+                    <SelectItem value="nk-6240">NK 6240</SelectItem>
+                  )}
+                  {getAvailableHybrids().includes("9001-gold") && (
+                    <SelectItem value="9001-gold">9001 GOLD</SelectItem>
+                  )}
+                  {getAvailableHybrids().includes("pioneer-3396") && (
+                    <SelectItem value="pioneer-3396">Pioneer 3396</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             {/* Unit — Unit Lead only */}
             {visibleFilters.includes("unit") && (
-              <div>
-                <label className="text-sm font-semibold text-slate-900 mb-2 block">
-                  Unit
-                </label>
-                <Select value={filterUnit} onValueChange={setFilterUnit}>
-                  <SelectTrigger className="h-10 bg-white border-slate-300">
-                    <SelectValue placeholder="All Units" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Units</SelectItem>
-                    <SelectItem value="unit-north">Unit North</SelectItem>
-                    <SelectItem value="unit-south">Unit South</SelectItem>
-                    <SelectItem value="unit-east">Unit East</SelectItem>
-                    <SelectItem value="unit-west">Unit West</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="border-t my-2"></div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                    Unit
+                  </label>
+                  <Select value={filterUnit} onValueChange={setFilterUnit}>
+                    <SelectTrigger className="h-10 bg-white border-slate-300">
+                      <SelectValue placeholder="All Units" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Units</SelectItem>
+                      {getAvailableUnits().includes("unit-north") && (
+                        <SelectItem value="unit-north">Unit North</SelectItem>
+                      )}
+                      {getAvailableUnits().includes("unit-south") && (
+                        <SelectItem value="unit-south">Unit South</SelectItem>
+                      )}
+                      {getAvailableUnits().includes("unit-east") && (
+                        <SelectItem value="unit-east">Unit East</SelectItem>
+                      )}
+                      {getAvailableUnits().includes("unit-west") && (
+                        <SelectItem value="unit-west">Unit West</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
             {/* Location — TM + UL */}
             {visibleFilters.includes("location") && (
-              <div>
-                <label className="text-sm font-semibold text-slate-900 mb-2 block">
-                  Location
-                </label>
-                <Select
-                  value={filterLocation}
-                  onValueChange={setFilterLocation}
-                >
-                  <SelectTrigger className="h-10 bg-white border-slate-300">
-                    <SelectValue placeholder="All Locations" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    <SelectItem value="location-a">Location A</SelectItem>
-                    <SelectItem value="location-b">Location B</SelectItem>
-                    <SelectItem value="location-c">Location C</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="border-t my-2"></div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                    Location
+                  </label>
+                  <Select
+                    value={filterLocation}
+                    onValueChange={setFilterLocation}
+                  >
+                    <SelectTrigger className="h-10 bg-white border-slate-300">
+                      <SelectValue placeholder="All Locations" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Locations</SelectItem>
+                      {getAvailableLocations().includes("location-a") && (
+                        <SelectItem value="location-a">Location A</SelectItem>
+                      )}
+                      {getAvailableLocations().includes("location-b") && (
+                        <SelectItem value="location-b">Location B</SelectItem>
+                      )}
+                      {getAvailableLocations().includes("location-c") && (
+                        <SelectItem value="location-c">Location C</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
 
             {/* Village — all roles */}
             {visibleFilters.includes("village") && (
-              <div>
-                <label className="text-sm font-semibold text-slate-900 mb-2 block">
-                  Village
-                </label>
-                <Select value={filterVillage} onValueChange={setFilterVillage}>
-                  <SelectTrigger className="h-10 bg-white border-slate-300">
-                    <SelectValue placeholder="All Villages" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Villages</SelectItem>
-                    <SelectItem value="rampur">Rampur</SelectItem>
-                    <SelectItem value="lakhanpur">Lakhanpur</SelectItem>
-                    <SelectItem value="sultanpur">Sultanpur</SelectItem>
-                    <SelectItem value="govindpur">Govindpur</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <>
+                <div className="border-t my-2"></div>
+                <div>
+                  <label className="text-sm font-semibold text-slate-900 mb-2 block">
+                    Village
+                  </label>
+                  <Select
+                    value={filterVillage}
+                    onValueChange={setFilterVillage}
+                  >
+                    <SelectTrigger className="h-10 bg-white border-slate-300">
+                      <SelectValue placeholder="All Villages" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Villages</SelectItem>
+                      {getAvailableVillages().includes("rampur") && (
+                        <SelectItem value="rampur">Rampur</SelectItem>
+                      )}
+                      {getAvailableVillages().includes("lakhanpur") && (
+                        <SelectItem value="lakhanpur">Lakhanpur</SelectItem>
+                      )}
+                      {getAvailableVillages().includes("sultanpur") && (
+                        <SelectItem value="sultanpur">Sultanpur</SelectItem>
+                      )}
+                      {getAvailableVillages().includes("govindpur") && (
+                        <SelectItem value="govindpur">Govindpur</SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
             )}
           </div>
           <div className="px-5 py-4 border-t bg-white flex-shrink-0">
