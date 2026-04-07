@@ -64,228 +64,37 @@ interface GrowersProps {
   role?: string;
 }
 
-export function Growers({
-  selectedRegion = "all",
-  role = "FDO",
-}: GrowersProps = {}) {
-  const plotMapImage = "../assets/53659142.jpg";
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedGrower, setSelectedGrower] = useState<Grower | null>(null);
-  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
-  const [isAddGrowerOpen, setIsAddGrowerOpen] = useState(false);
-  const [isAddPlotWizardOpen, setIsAddPlotWizardOpen] = useState(false);
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [addStep, setAddStep] = useState(1);
-  const [selectedCropType, setSelectedCropType] = useState("Corn");
-  const [editingGrowerId, setEditingGrowerId] = useState<string | null>(null);
-
-  // Form data state
-  const [formData, setFormData] = useState({
-    preferredName: "",
-    age: "",
-    fathersName: "",
-    panNumber: "",
-    phone: "",
-    referenceNumber: "",
-    village: "",
-    aadhaarNumber: "",
-    unit: "",
-    location: "",
-    cropType: "Corn",
-  });
-
-  // Plot details state
-  const [isMediaSectionOpen, setIsMediaSectionOpen] = useState(true);
-  const [isMediaSaved, setIsMediaSaved] = useState(false);
-  const [mediaEntries, setMediaEntries] = useState<any[]>([]);
-
-  // Field Stages state
-  const [activeFieldStage, setActiveFieldStage] = useState("pre-sowing");
-  const [isFieldSummaryOpen, setIsFieldSummaryOpen] = useState(false);
-  const [fieldStageData, setFieldStageData] = useState({
-    preSowing: { measured: false, acreage: "" },
-    sowing: {
-      previousCrop: "",
-      plantingRatio: "",
-      maleLotNumber: "",
-      femaleLotNumber: "",
-      maleIssuedAcre: "",
-      femaleIssuedAcre: "",
-      irrigationType: "",
-      femaleSowingDate: "",
-      acres: "",
-      male1PlantingDate: "",
-      male2PlantingDate: "",
-    },
-    vegetative: {
-      areaCancelled: "",
-      areaCancelledReason: [] as string[],
-      plantUniformity: "",
-      ffPlantCount: "",
-      male1PlantCount: "",
-      rowSpacingFF: "",
-      rowSpacingFM: "",
-      rowSpacingMM: "",
-      male2PlantCount: "",
-      plantRouging: "",
-      standingAcre: "",
-      estimatedYield: "",
-    },
-    flowering: {
-      detasselingStart: "",
-      detasselingEnd: "",
-      pollinationInfo: "",
-      ffTasselsThrowing: "",
-      offTypesShedding: "",
-      nicking: "",
-      mSkeletonization: "",
-      ffSilks: "",
-      male1TasselsThrowing: "",
-      male2TasselsThrowing: "",
-      mPollenAmount: "",
-      fieldProblem: "",
-      neighborShedding: "",
-      neighborDistance: "",
-      isolationSufficient: "",
-      isolationCode: "",
-      nickWithContaminantBlock: "",
-      fieldScoreRating: "",
-      standingAcre: "",
-      estimatedYield: "",
-    },
-    quality: { notes: "" },
-    preHarvest: {
-      maleDestruction: "",
-      diseaseIntensity: "",
-      diseaseName: "",
-      cropHealth: "",
-      fieldProblem: "",
-      estimatedYield: "",
-      preHarvestCutMoisture: "",
-      standingAcre: "",
-      estimatedYieldFinal: "",
-    },
-    harvest: {
-      maleDate: "",
-      femaleDate: "",
-      harvestWeight: "",
-      fieldFinal: "",
-    },
-    dispatch: { dispatchWeight: "", truckNumber: "", lrNumber: "" },
-    ccp: { childWorking: "" },
-  });
-
-  const updateStageField = (stage: string, field: string, value: unknown) => {
-    setFieldStageData((prev: any) => ({
-      ...prev,
-      [stage]: { ...prev[stage], [field]: value },
-    }));
+// Separate Memoized Component to prevent re-renders on state change
+interface AddGrowerFormProps {
+  addStep: number;
+  setAddStep: (step: number) => void;
+  formData: {
+    preferredName: string;
+    age: string;
+    fathersName: string;
+    panNumber: string;
+    phone: string;
+    referenceNumber: string;
+    village: string;
+    aadhaarNumber: string;
+    unit: string;
+    location: string;
+    cropType: string;
   };
+  setFormData: (data: any) => void;
+  selectedCropType: string;
+  setSelectedCropType: (type: string) => void;
+}
 
-  const FIELD_STAGES = [
-    { id: "pre-sowing", label: "Pre-Sowing" },
-    { id: "sowing", label: "Sowing" },
-    { id: "vegetative", label: "Vegetative" },
-    { id: "flowering", label: "Flowering" },
-    { id: "quality", label: "Quality" },
-    { id: "pre-harvest", label: "Pre-Harvest" },
-    { id: "harvest", label: "Harvest" },
-    { id: "dispatch", label: "Dispatch" },
-    { id: "ccp", label: "CCP" },
-  ];
-
-  const [filters, setFilters] = useState({
-    unit: "all",
-    location: "all",
-    block: "all",
-    village: "all",
-    hybrid: "all",
-  });
-
-  const [auditFilter, setAuditFilter] = useState<"all" | "audited" | "pending">(
-    "all",
-  );
-
-  const [plotHybridFilter, setPlotHybridFilter] = useState("all");
-  const [plotSearchQuery, setPlotSearchQuery] = useState("");
-
-  const activeFilterCount = [
-    filters.unit !== "all",
-    filters.location !== "all",
-    filters.block !== "all",
-    filters.village !== "all",
-    filters.hybrid !== "all",
-  ].filter(Boolean).length;
-
-  const filteredGrowers = MOCK_GROWERS.filter((g) => {
-    const matchesSearch =
-      g.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.village.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      g.panNumber.toLowerCase().includes(searchQuery.toLowerCase());
-
-    if (!matchesSearch) return false;
-
-    if (
-      filters.village !== "all" &&
-      g.village.toLowerCase() !== filters.village
-    )
-      return false;
-
-    return true;
-  });
-
-  // Get pending advisory for selected plot
-  const pendingAdvisory = selectedPlot
-    ? MOCK_ADVISORIES.find(
-        (a) => a.plotId === selectedPlot.id && a.status === "Pending",
-      )
-    : null;
-
-  // Handle edit grower
-  const handleEditGrower = (grower: Grower) => {
-    setEditingGrowerId(grower.id);
-    setFormData({
-      preferredName: grower.name,
-      age: grower.age.toString(),
-      fathersName: grower.fathersName,
-      panNumber: grower.panNumber,
-      phone: grower.phone,
-      referenceNumber: "",
-      village: grower.village,
-      aadhaarNumber: "",
-      cropType: grower.cropType,
-      unit: grower.unit,
-      location: grower.location,
-    });
-    setSelectedCropType(grower.cropType);
-    setIsAddGrowerOpen(true);
-    setAddStep(1);
-  };
-
-  // Reset form when dialog closes
-  const handleCloseDialog = () => {
-    setIsAddGrowerOpen(false);
-    setEditingGrowerId(null);
-    setAddStep(1);
-    setSelectedCropType("Corn");
-    setFormData({
-      preferredName: "",
-      age: "",
-      fathersName: "",
-      panNumber: "",
-      phone: "",
-      referenceNumber: "",
-      village: "",
-      aadhaarNumber: "",
-      cropType: "Corn",
-      unit: "",
-      location: "",
-    });
-  };
-
-  const AddGrowerForm = () => (
+const AddGrowerFormComponent = React.memo(
+  ({
+    addStep,
+    setAddStep,
+    formData,
+    setFormData,
+    selectedCropType,
+    setSelectedCropType,
+  }: AddGrowerFormProps) => (
     <div className="space-y-4 py-2">
       {addStep === 1 && (
         <div className="space-y-4 animate-in fade-in slide-in-from-right-4">
@@ -517,7 +326,231 @@ export function Growers({
         </div>
       )}
     </div>
+  ),
+);
+
+AddGrowerFormComponent.displayName = "AddGrowerForm";
+
+export function Growers({
+  selectedRegion = "all",
+  role = "FDO",
+}: GrowersProps = {}) {
+  const plotMapImage = "../assets/53659142.jpg";
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGrower, setSelectedGrower] = useState<Grower | null>(null);
+  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
+  const [isAddGrowerOpen, setIsAddGrowerOpen] = useState(false);
+  const [isAddPlotWizardOpen, setIsAddPlotWizardOpen] = useState(false);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+  const [addStep, setAddStep] = useState(1);
+  const [selectedCropType, setSelectedCropType] = useState("Corn");
+  const [editingGrowerId, setEditingGrowerId] = useState<string | null>(null);
+
+  // Form data state
+  const [formData, setFormData] = useState({
+    preferredName: "",
+    age: "",
+    fathersName: "",
+    panNumber: "",
+    phone: "",
+    referenceNumber: "",
+    village: "",
+    aadhaarNumber: "",
+    unit: "",
+    location: "",
+    cropType: "Corn",
+  });
+
+  // Plot details state
+  const [isMediaSectionOpen, setIsMediaSectionOpen] = useState(true);
+  const [isMediaSaved, setIsMediaSaved] = useState(false);
+  const [mediaEntries, setMediaEntries] = useState<any[]>([]);
+
+  // Field Stages state
+  const [activeFieldStage, setActiveFieldStage] = useState("pre-sowing");
+  const [isFieldSummaryOpen, setIsFieldSummaryOpen] = useState(false);
+  const [fieldStageData, setFieldStageData] = useState({
+    preSowing: { measured: false, acreage: "" },
+    sowing: {
+      previousCrop: "",
+      plantingRatio: "",
+      maleLotNumber: "",
+      femaleLotNumber: "",
+      maleIssuedAcre: "",
+      femaleIssuedAcre: "",
+      irrigationType: "",
+      femaleSowingDate: "",
+      acres: "",
+      male1PlantingDate: "",
+      male2PlantingDate: "",
+    },
+    vegetative: {
+      areaCancelled: "",
+      areaCancelledReason: [] as string[],
+      plantUniformity: "",
+      ffPlantCount: "",
+      male1PlantCount: "",
+      rowSpacingFF: "",
+      rowSpacingFM: "",
+      rowSpacingMM: "",
+      male2PlantCount: "",
+      plantRouging: "",
+      standingAcre: "",
+      estimatedYield: "",
+    },
+    flowering: {
+      detasselingStart: "",
+      detasselingEnd: "",
+      pollinationInfo: "",
+      ffTasselsThrowing: "",
+      offTypesShedding: "",
+      nicking: "",
+      mSkeletonization: "",
+      ffSilks: "",
+      male1TasselsThrowing: "",
+      male2TasselsThrowing: "",
+      mPollenAmount: "",
+      fieldProblem: "",
+      neighborShedding: "",
+      neighborDistance: "",
+      isolationSufficient: "",
+      isolationCode: "",
+      nickWithContaminantBlock: "",
+      fieldScoreRating: "",
+      standingAcre: "",
+      estimatedYield: "",
+    },
+    quality: { notes: "" },
+    preHarvest: {
+      maleDestruction: "",
+      diseaseIntensity: "",
+      diseaseName: "",
+      cropHealth: "",
+      fieldProblem: "",
+      estimatedYield: "",
+      preHarvestCutMoisture: "",
+      standingAcre: "",
+      estimatedYieldFinal: "",
+    },
+    harvest: {
+      maleDate: "",
+      femaleDate: "",
+      harvestWeight: "",
+      fieldFinal: "",
+    },
+    dispatch: { dispatchWeight: "", truckNumber: "", lrNumber: "" },
+    ccp: { childWorking: "" },
+  });
+
+  const updateStageField = (stage: string, field: string, value: unknown) => {
+    setFieldStageData((prev: any) => ({
+      ...prev,
+      [stage]: { ...prev[stage], [field]: value },
+    }));
+  };
+
+  const FIELD_STAGES = [
+    { id: "pre-sowing", label: "Pre-Sowing" },
+    { id: "sowing", label: "Sowing" },
+    { id: "vegetative", label: "Vegetative" },
+    { id: "flowering", label: "Flowering" },
+    { id: "quality", label: "Quality" },
+    { id: "pre-harvest", label: "Pre-Harvest" },
+    { id: "harvest", label: "Harvest" },
+    { id: "dispatch", label: "Dispatch" },
+    { id: "ccp", label: "CCP" },
+  ];
+
+  const [filters, setFilters] = useState({
+    unit: "all",
+    location: "all",
+    block: "all",
+    village: "all",
+    hybrid: "all",
+  });
+
+  const [auditFilter, setAuditFilter] = useState<"all" | "audited" | "pending">(
+    "all",
   );
+
+  const [plotHybridFilter, setPlotHybridFilter] = useState("all");
+  const [plotSearchQuery, setPlotSearchQuery] = useState("");
+
+  const activeFilterCount = [
+    filters.unit !== "all",
+    filters.location !== "all",
+    filters.block !== "all",
+    filters.village !== "all",
+    filters.hybrid !== "all",
+  ].filter(Boolean).length;
+
+  const filteredGrowers = MOCK_GROWERS.filter((g) => {
+    const matchesSearch =
+      g.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.village.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.phone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      g.panNumber.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (
+      filters.village !== "all" &&
+      g.village.toLowerCase() !== filters.village
+    )
+      return false;
+
+    return true;
+  });
+
+  // Get pending advisory for selected plot
+  const pendingAdvisory = selectedPlot
+    ? MOCK_ADVISORIES.find(
+        (a) => a.plotId === selectedPlot.id && a.status === "Pending",
+      )
+    : null;
+
+  // Handle edit grower
+  const handleEditGrower = (grower: Grower) => {
+    setEditingGrowerId(grower.id);
+    setFormData({
+      preferredName: grower.name,
+      age: grower.age.toString(),
+      fathersName: grower.fathersName,
+      panNumber: grower.panNumber,
+      phone: grower.phone,
+      referenceNumber: "",
+      village: grower.village,
+      aadhaarNumber: "",
+      cropType: grower.cropType,
+      unit: grower.unit,
+      location: grower.location,
+    });
+    setSelectedCropType(grower.cropType);
+    setIsAddGrowerOpen(true);
+    setAddStep(1);
+  };
+
+  // Reset form when dialog closes
+  const handleCloseDialog = () => {
+    setIsAddGrowerOpen(false);
+    setEditingGrowerId(null);
+    setAddStep(1);
+    setSelectedCropType("Corn");
+    setFormData({
+      preferredName: "",
+      age: "",
+      fathersName: "",
+      panNumber: "",
+      phone: "",
+      referenceNumber: "",
+      village: "",
+      aadhaarNumber: "",
+      cropType: "Corn",
+      unit: "",
+      location: "",
+    });
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -2282,7 +2315,14 @@ export function Growers({
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                  <AddGrowerForm />
+                  <AddGrowerFormComponent
+                    addStep={addStep}
+                    setAddStep={setAddStep}
+                    formData={formData}
+                    setFormData={setFormData}
+                    selectedCropType={selectedCropType}
+                    setSelectedCropType={setSelectedCropType}
+                  />
                 </div>
 
                 {/* Footer with same button styling as AddPlotWizard */}
