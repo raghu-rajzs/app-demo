@@ -61,6 +61,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "./ui/sheet";
 import { AddPlotWizard } from "./AddPlotWizard";
+import { FieldAdditionPage } from "./FieldAdditionPage";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Checkbox } from "./ui/checkbox";
 import { Separator } from "./ui/separator";
@@ -88,6 +89,9 @@ export function PlotTracker({
   const [viewMode, setViewMode] = useState<"map" | "list">("list");
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [isAddPlotOpen, setIsAddPlotOpen] = useState(false);
+  const [isFieldAdditionPageOpen, setIsFieldAdditionPageOpen] = useState(false);
+  const [fieldAdditionInitialData, setFieldAdditionInitialData] =
+    useState<any>(null);
   const [wizardInitialStep, setWizardInitialStep] = useState<1 | 2 | 3>(1);
   const [isPreSeasonOpen, setIsPreSeasonOpen] = useState(false);
   const [isSeasonDetailsOpen, setIsSeasonDetailsOpen] = useState(false);
@@ -3416,12 +3420,33 @@ export function PlotTracker({
             onClose={() => {
               setIsAddPlotOpen(false);
               setCopiedPlotInitialData(null);
-              setWizardInitialStep(1);
+            }}
+            onMappingComplete={(mappingData) => {
+              // Mapping complete - open FieldAdditionPage
+              setFieldAdditionInitialData(mappingData);
+              setIsFieldAdditionPageOpen(true);
+              setIsAddPlotOpen(false);
             }}
             initialData={copiedPlotInitialData}
             selectedRegion={selectedRegion}
-            initialStep={wizardInitialStep}
           />
+
+          {/* Field Addition Page */}
+          {isFieldAdditionPageOpen && (
+            <FieldAdditionPage
+              initialData={fieldAdditionInitialData}
+              onClose={() => {
+                setIsFieldAdditionPageOpen(false);
+                setFieldAdditionInitialData(null);
+              }}
+              onSave={(fieldData) => {
+                // Handle saving field data
+                console.log("Field added:", fieldData);
+                setIsFieldAdditionPageOpen(false);
+                setFieldAdditionInitialData(null);
+              }}
+            />
+          )}
 
           {/* Copy Plot Dialog */}
           <Dialog open={isCopyPlotOpen} onOpenChange={setIsCopyPlotOpen}>
@@ -3964,6 +3989,7 @@ export function PlotTracker({
 
       {/* View Mode Toggle - Floating Bottom Overlay - Hidden when forms are open */}
       {!isAddPlotOpen &&
+        !isFieldAdditionPageOpen &&
         !isPreSeasonOpen &&
         !isSeasonDetailsOpen &&
         !isHarvestDetailsOpen &&
