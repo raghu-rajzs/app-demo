@@ -42,16 +42,19 @@ export function Analytics({
   role = "FDO",
 }: AnalyticsProps) {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [alertStage, setAlertStage] = useState("All Stages");
   const [hybridType, setHybridType] = useState("all");
+  const [filterTerritoryManager, setFilterTerritoryManager] = useState("all");
+  const [filterFDO, setFilterFDO] = useState("all");
   const [filterUnit, setFilterUnit] = useState("all");
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterVillage, setFilterVillage] = useState("all");
 
   const visibleFilters =
     role === "FDO"
-      ? ["hybrid", "village"]
+      ? ["territoryManager", "hybrid", "village"]
       : role === "Territory Manager"
-        ? ["hybrid", "location", "village"]
+        ? ["fdo", "hybrid", "village"]
         : ["hybrid", "unit", "location", "village"]; // Unit Lead
 
   const activeFilterCount = [
@@ -70,12 +73,14 @@ export function Analytics({
       acreageLabel: "Sown Acre",
       acreage: 140,
       fieldCount: 32,
+      pld: 150,
       inProgress: 12,
       notYetStarted: 10,
       completed: 10,
-      expectedYield: null as number | null,
+      actualYield: null as number | null,
       iconBg: "#e8f5e9",
       iconColor: "#2e7d32",
+      alerts: { overdue: 2, today: 5, upcoming: 12 },
     },
     {
       id: "vegetative",
@@ -84,12 +89,14 @@ export function Analytics({
       acreageLabel: "Standing Acre",
       acreage: 67.5,
       fieldCount: 18,
+      pld: 85,
       inProgress: 8,
       notYetStarted: 5,
       completed: 5,
-      expectedYield: null as number | null,
+      actualYield: null as number | null,
       iconBg: "#e8f5e9",
       iconColor: "#2e7d32",
+      alerts: { overdue: 1, today: 3, upcoming: 8 },
     },
     {
       id: "flowering",
@@ -98,12 +105,14 @@ export function Analytics({
       acreageLabel: "Standing Acre",
       acreage: 98.2,
       fieldCount: 28,
+      pld: 120,
       inProgress: 10,
       notYetStarted: 8,
       completed: 10,
-      expectedYield: 120,
+      actualYield: null as number | null,
       iconBg: "#f1f8e9",
       iconColor: "#558b2f",
+      alerts: { overdue: 3, today: 6, upcoming: 14 },
     },
     {
       id: "harvest",
@@ -112,12 +121,14 @@ export function Analytics({
       acreageLabel: "Harvested Acre",
       acreage: 112.3,
       fieldCount: 30,
+      pld: 140,
       inProgress: 12,
       notYetStarted: 8,
       completed: 10,
-      expectedYield: 156,
+      actualYield: 156,
       iconBg: "#e8f5e9",
       iconColor: "#33691e",
+      alerts: { overdue: 4, today: 8, upcoming: 16 },
     },
     {
       id: "dispatch",
@@ -126,14 +137,40 @@ export function Analytics({
       acreageLabel: "Dispatched Acre",
       acreage: 45.8,
       fieldCount: 16,
+      pld: 60,
       inProgress: 6,
       notYetStarted: 4,
       completed: 6,
-      expectedYield: 34.2,
+      actualYield: 34.2,
+      productivity: 0.748, // 34.2 / 45.8
       iconBg: "#e0f2f1",
       iconColor: "#00695c",
+      alerts: { overdue: 1, today: 2, upcoming: 5 },
     },
   ];
+
+  // Calculate alert counts based on selected stage
+  const getAlertCounts = () => {
+    if (alertStage === "All Stages") {
+      return {
+        overdue: stageData.reduce(
+          (sum, stage) => sum + stage.alerts.overdue,
+          0,
+        ),
+        today: stageData.reduce((sum, stage) => sum + stage.alerts.today, 0),
+        upcoming: stageData.reduce(
+          (sum, stage) => sum + stage.alerts.upcoming,
+          0,
+        ),
+      };
+    }
+    const selectedStageData = stageData.find((s) => s.label === alertStage);
+    return selectedStageData
+      ? selectedStageData.alerts
+      : { overdue: 0, today: 0, upcoming: 0 };
+  };
+
+  const alertCounts = getAlertCounts();
 
   return (
     <div
@@ -210,18 +247,49 @@ export function Analytics({
       {/* ── ALERTS SECTION ── */}
       <div
         style={{
-          color: "#c0392b",
-          fontSize: "8px",
-          fontWeight: 700,
-          letterSpacing: "1.2px",
           marginBottom: "6px",
           display: "flex",
           alignItems: "center",
-          gap: "4px",
+          justifyContent: "space-between",
         }}
       >
-        <AlertCircle style={{ width: "10px", height: "10px" }} />
-        ALERTS
+        <div
+          style={{
+            color: "#c0392b",
+            fontSize: "8px",
+            fontWeight: 700,
+            letterSpacing: "1.2px",
+            display: "flex",
+            alignItems: "center",
+            gap: "4px",
+          }}
+        >
+          <AlertCircle style={{ width: "10px", height: "10px" }} />
+          ALERTS
+        </div>
+        <Select value={alertStage} onValueChange={setAlertStage}>
+          <SelectTrigger
+            style={{
+              height: "28px",
+              fontSize: "11px",
+              fontWeight: 600,
+              border: "1.5px solid #e2e8f0",
+              borderRadius: "6px",
+              padding: "4px 8px",
+              width: "120px",
+            }}
+          >
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All Stages">All Stages</SelectItem>
+            <SelectItem value="Sowing">Sowing</SelectItem>
+            <SelectItem value="Vegetative">Vegetative</SelectItem>
+            <SelectItem value="Flowering">Flowering</SelectItem>
+            <SelectItem value="Harvest">Harvest</SelectItem>
+            <SelectItem value="Dispatch">Dispatch</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div style={{ display: "flex", gap: "5px", marginBottom: "14px" }}>
         {/* Overdue */}
@@ -267,7 +335,7 @@ export function Analytics({
               lineHeight: 1,
             }}
           >
-            3
+            {alertCounts.overdue}
           </span>
           <span style={{ fontSize: "8px", color: "#888" }}>Tasks</span>
         </div>
@@ -315,7 +383,7 @@ export function Analytics({
               lineHeight: 1,
             }}
           >
-            7
+            {alertCounts.today}
           </span>
           <span style={{ fontSize: "8px", color: "#888" }}>Tasks</span>
         </div>
@@ -363,7 +431,7 @@ export function Analytics({
               lineHeight: 1,
             }}
           >
-            18
+            {alertCounts.upcoming}
           </span>
           <span style={{ fontSize: "8px", color: "#888" }}>Tasks</span>
         </div>
@@ -692,6 +760,18 @@ export function Analytics({
                 <span style={{ fontSize: "10px", color: "#666" }}> Fields</span>
               </div>
 
+              {/* PLD Display */}
+              <div
+                style={{
+                  marginBottom: "10px",
+                  fontSize: "11px",
+                  color: "#555",
+                  fontWeight: 600,
+                }}
+              >
+                PLD: {stage.pld} Acre
+              </div>
+
               {/* Status Pills */}
               <div style={{ display: "flex", gap: "5px" }}>
                 {/* In Progress */}
@@ -809,13 +889,58 @@ export function Analytics({
                 </div>
               </div>
 
-              {/* Expected Yield */}
-              {stage.expectedYield !== null && (
+              {/* Actual Yield for Harvest & Dispatch */}
+              {(stage.id === "harvest" || stage.id === "dispatch") &&
+                stage.actualYield !== null && (
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      paddingTop: "8px",
+                      borderTop: "1px solid #f0f0f0",
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: "4px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "9px",
+                        color: "#888",
+                        fontWeight: 600,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                      }}
+                    >
+                      Actual Yield:
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: 800,
+                        color: "#1a1a1a",
+                        lineHeight: 1,
+                      }}
+                    >
+                      {stage.actualYield}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        color: "#666",
+                        fontWeight: 500,
+                      }}
+                    >
+                      Tons
+                    </span>
+                  </div>
+                )}
+
+              {/* Productivity for Dispatch */}
+              {stage.id === "dispatch" && stage.productivity !== undefined && (
                 <div
                   style={{
-                    marginTop: "10px",
+                    marginTop: "8px",
                     paddingTop: "8px",
-                    borderTop: "1px solid #f0f0f0",
                     display: "flex",
                     alignItems: "baseline",
                     gap: "4px",
@@ -830,7 +955,7 @@ export function Analytics({
                       letterSpacing: "0.5px",
                     }}
                   >
-                    Expected Yield:
+                    Productivity:
                   </span>
                   <span
                     style={{
@@ -840,12 +965,12 @@ export function Analytics({
                       lineHeight: 1,
                     }}
                   >
-                    {stage.expectedYield}
+                    {stage.productivity.toFixed(2)}
                   </span>
                   <span
                     style={{ fontSize: "10px", color: "#666", fontWeight: 500 }}
                   >
-                    KG
+                    tons/acre
                   </span>
                 </div>
               )}

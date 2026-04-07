@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Home,
   MapIcon,
@@ -8,6 +8,8 @@ import {
   BookOpen,
   Truck,
   UserCog,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import {
   Sheet,
@@ -72,6 +74,20 @@ export function Layout({
   const [filterLocation, setFilterLocation] = useState("all");
   const [filterBlock, setFilterBlock] = useState("all");
   const [filterVillage, setFilterVillage] = useState("all");
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   const visibleGeoFilters =
     role === "FDO"
@@ -116,11 +132,24 @@ export function Layout({
             Rajiv Sharma
           </span>
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 bg-white px-2 py-1 rounded-full flex-shrink-0">
-              <div className="h-2 w-2 rounded-full bg-[#4CAF50] animate-pulse" />
-              <span className="text-[10px] text-[#4CAF50] font-medium whitespace-nowrap">
-                Connected
-              </span>
+            <div
+              className={`flex items-center gap-1.5 ${isOnline ? "bg-white" : "bg-red-100"} px-2 py-1 rounded-full flex-shrink-0`}
+            >
+              {isOnline ? (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-[#4CAF50] animate-pulse" />
+                  <span className="text-[10px] text-[#4CAF50] font-medium whitespace-nowrap">
+                    Online
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="h-2 w-2 rounded-full bg-red-500" />
+                  <span className="text-[10px] text-red-600 font-medium whitespace-nowrap">
+                    Offline
+                  </span>
+                </>
+              )}
             </div>
             <Sheet open={isProfileOpen} onOpenChange={setIsProfileOpen}>
               <SheetTrigger asChild>
@@ -215,24 +244,27 @@ export function Layout({
                           className="w-full justify-between h-12 text-sm font-medium hover:bg-slate-50 border-slate-200"
                         >
                           <div className="flex items-center gap-3">
-                            <Globe className="h-5 w-5 text-slate-600" />
-                            <span className="text-slate-800">
-                              Change Language
-                            </span>
-                          </div>
-                          <span className="text-sm font-semibold text-slate-500">
-                            EN
-                          </span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-between h-12 text-sm font-medium hover:bg-slate-50 border-slate-200"
-                        >
-                          <div className="flex items-center gap-3">
                             <Settings className="h-5 w-5 text-slate-600" />
                             <span className="text-slate-800">Settings</span>
                           </div>
                         </Button>
+                        <div className="p-4 rounded-lg bg-slate-50 border border-slate-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            {isOnline ? (
+                              <Wifi className="h-5 w-5 text-[#4CAF50]" />
+                            ) : (
+                              <WifiOff className="h-5 w-5 text-red-500" />
+                            )}
+                            <span className="text-sm font-semibold text-slate-800">
+                              Network Status
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-600">
+                            {isOnline
+                              ? "Connected to network"
+                              : "No internet connection"}
+                          </p>
+                        </div>
                       </div>
                     </div>
 

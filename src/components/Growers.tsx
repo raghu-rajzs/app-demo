@@ -61,9 +61,13 @@ import { Textarea } from "./ui/textarea";
 
 interface GrowersProps {
   selectedRegion?: string;
+  role?: string;
 }
 
-export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
+export function Growers({
+  selectedRegion = "all",
+  role = "FDO",
+}: GrowersProps = {}) {
   const plotMapImage = "../assets/53659142.jpg";
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGrower, setSelectedGrower] = useState<Grower | null>(null);
@@ -78,19 +82,16 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
   // Form data state
   const [formData, setFormData] = useState({
     preferredName: "",
-    agreementName: "",
     age: "",
     fathersName: "",
     panNumber: "",
     phone: "",
-    alternatePhone: "",
-    cropType: "Corn",
+    referenceNumber: "",
+    village: "",
+    aadhaarNumber: "",
     unit: "",
     location: "",
-    territory: "",
-    block: "",
-    village: "",
-    category: "",
+    cropType: "Corn",
   });
 
   // Plot details state
@@ -206,7 +207,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
   );
 
   const [plotHybridFilter, setPlotHybridFilter] = useState("all");
-  const [plotStageFilter, setPlotStageFilter] = useState("all");
   const [plotSearchQuery, setPlotSearchQuery] = useState("");
 
   const activeFilterCount = [
@@ -248,19 +248,16 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
     setEditingGrowerId(grower.id);
     setFormData({
       preferredName: grower.name,
-      agreementName: grower.agreementName,
       age: grower.age.toString(),
       fathersName: grower.fathersName,
       panNumber: grower.panNumber,
       phone: grower.phone,
-      alternatePhone: grower.alternatePhone || "",
+      referenceNumber: "",
+      village: grower.village,
+      aadhaarNumber: "",
       cropType: grower.cropType,
       unit: grower.unit,
       location: grower.location,
-      territory: grower.cropType === "Rice" ? grower.location : "",
-      block: grower.block,
-      village: grower.village,
-      category: grower.category,
     });
     setSelectedCropType(grower.cropType);
     setIsAddGrowerOpen(true);
@@ -275,19 +272,16 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
     setSelectedCropType("Corn");
     setFormData({
       preferredName: "",
-      agreementName: "",
       age: "",
       fathersName: "",
       panNumber: "",
       phone: "",
-      alternatePhone: "",
+      referenceNumber: "",
+      village: "",
+      aadhaarNumber: "",
       cropType: "Corn",
       unit: "",
       location: "",
-      territory: "",
-      block: "",
-      village: "",
-      category: "",
     });
   };
 
@@ -298,22 +292,11 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
           <div className="space-y-2">
             <Label className="text-base">Grower Preferred Name *</Label>
             <Input
-              placeholder="Enter full name"
+              placeholder="Enter grower preferred name"
               className="h-12 text-base"
               value={formData.preferredName}
               onChange={(e) =>
                 setFormData({ ...formData, preferredName: e.target.value })
-              }
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-base">Grower Agreement Name *</Label>
-            <Input
-              placeholder="Enter full name"
-              className="h-12 text-base"
-              value={formData.agreementName}
-              onChange={(e) =>
-                setFormData({ ...formData, agreementName: e.target.value })
               }
             />
           </div>
@@ -344,7 +327,49 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base">PAN Number</Label>
+            <Label className="text-base">Phone Number (Optional)</Label>
+            <Input
+              placeholder="+91 98765 43210"
+              className="h-12 text-base"
+              value={formData.phone}
+              onChange={(e) =>
+                setFormData({ ...formData, phone: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base">Reference Number *</Label>
+            <Input
+              placeholder="Enter reference number"
+              className="h-12 text-base"
+              value={formData.referenceNumber}
+              onChange={(e) =>
+                setFormData({ ...formData, referenceNumber: e.target.value })
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base">Village *</Label>
+            <Select
+              value={formData.village}
+              onValueChange={(v) => setFormData({ ...formData, village: v })}
+            >
+              <SelectTrigger className="h-12 text-base">
+                <SelectValue placeholder="Select Village" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rampur">Rampur</SelectItem>
+                <SelectItem value="lakhanpur">Lakhanpur</SelectItem>
+                <SelectItem value="sultanpur">Sultanpur</SelectItem>
+                <SelectItem value="govindpur">Govindpur</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-base">PAN No. (text)</Label>
             <Input
               placeholder="Enter PAN number (e.g., ABCDE1234F)"
               className="h-12 text-base"
@@ -356,50 +381,26 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             />
           </div>
 
-          {/* Removed Upload Profile Photo section */}
-
           <div className="space-y-2">
-            <Label>Phone Number</Label>
-            <Input
-              placeholder="+91 98765 43210"
-              className="h-12"
-              value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-            />
+            <Label className="text-base">Upload PAN (Image)</Label>
+            <Input type="file" accept="image/*" className="h-12 text-base" />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base">Alternate Number (Optional)</Label>
+            <Label className="text-base">Aadhaar No. (text)</Label>
             <Input
-              placeholder="+91"
-              type="tel"
+              placeholder="Enter Aadhaar number"
               className="h-12 text-base"
-              value={formData.alternatePhone}
+              value={formData.aadhaarNumber}
               onChange={(e) =>
-                setFormData({ ...formData, alternatePhone: e.target.value })
+                setFormData({ ...formData, aadhaarNumber: e.target.value })
               }
             />
           </div>
 
           <div className="space-y-2">
-            <Label className="text-base">Crop Type *</Label>
-            <Select
-              value={formData.cropType}
-              onValueChange={(v) => {
-                setFormData({ ...formData, cropType: v });
-                setSelectedCropType(v);
-              }}
-            >
-              <SelectTrigger className="h-12 text-base">
-                <SelectValue placeholder="Select Crop Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Corn">Corn</SelectItem>
-                <SelectItem value="Rice">Rice</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="text-base">Upload Aadhaar (file upload)</Label>
+            <Input type="file" className="h-12 text-base" />
           </div>
 
           {selectedCropType === "Rice" ? (
@@ -2102,14 +2103,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-red-600">
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <AlertOctagon className="h-4 w-4 mr-2" />
-                  Report An Issue
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -2122,15 +2115,23 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                 <h3 className="font-semibold text-slate-900">Grower Details</h3>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                   <div>
-                    <p className="text-xs text-slate-500">Preferred Name</p>
+                    <p className="text-xs text-slate-500">Grower ID</p>
+                    <p className="font-medium text-slate-900">
+                      {selectedGrower.id}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500">
+                      Grower Preferred Name
+                    </p>
                     <p className="font-medium text-slate-900">
                       {selectedGrower.name}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Agreement Name</p>
+                    <p className="text-xs text-slate-500">SAP Grower ID</p>
                     <p className="font-medium text-slate-900">
-                      {selectedGrower.agreementName}
+                      SAP-{selectedGrower.id.substring(0, 6).toUpperCase()}
                     </p>
                   </div>
                   <div>
@@ -2158,12 +2159,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Alternate Phone</p>
-                    <p className="font-medium text-slate-900">
-                      {selectedGrower.alternatePhone || "—"}
-                    </p>
-                  </div>
-                  <div>
                     <p className="text-xs text-slate-500">Crop Type</p>
                     <p className="font-medium text-slate-900">
                       {selectedGrower.cropType}
@@ -2186,21 +2181,9 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500">Block</p>
-                    <p className="font-medium text-slate-900">
-                      {selectedGrower.block}
-                    </p>
-                  </div>
-                  <div>
                     <p className="text-xs text-slate-500">Village</p>
                     <p className="font-medium text-slate-900">
                       {selectedGrower.village}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">Category</p>
-                    <p className="font-medium text-slate-900">
-                      {selectedGrower.category}
                     </p>
                   </div>
                   <div>
@@ -2245,17 +2228,14 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                       >
                         <Filter className="h-4 w-4" />
                         <span className="text-xs hidden sm:inline">Filter</span>
-                        {(plotHybridFilter !== "all" ||
-                          plotStageFilter !== "all") && (
+                        {plotHybridFilter !== "all" && (
                           <Badge
                             variant="secondary"
                             className="h-5 px-1 text-[10px]"
                           >
                             {
-                              [
-                                plotHybridFilter !== "all",
-                                plotStageFilter !== "all",
-                              ].filter(Boolean).length
+                              [plotHybridFilter !== "all"].filter(Boolean)
+                                .length
                             }
                           </Badge>
                         )}
@@ -2295,42 +2275,7 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
                         <Separator />
 
-                        <div className="space-y-2">
-                          <Label className="text-sm font-medium">
-                            Current Stage
-                          </Label>
-                          <Select
-                            value={plotStageFilter}
-                            onValueChange={setPlotStageFilter}
-                          >
-                            <SelectTrigger className="h-8 text-xs">
-                              <SelectValue placeholder="All Stages" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All Stages</SelectItem>
-                              {Array.from(
-                                new Set(
-                                  selectedGrower.plots
-                                    .map(
-                                      (plotId) =>
-                                        MOCK_PLOTS.find((p) => p.id === plotId)
-                                          ?.stage,
-                                    )
-                                    .filter(Boolean),
-                                ),
-                              ).map((stage) => (
-                                <SelectItem key={stage} value={stage || ""}>
-                                  {stage}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <Separator />
-
-                        {(plotHybridFilter !== "all" ||
-                          plotStageFilter !== "all") && (
+                        {plotHybridFilter !== "all" && (
                           <>
                             <Separator />
                             <Button
@@ -2339,7 +2284,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                               className="w-full text-xs"
                               onClick={() => {
                                 setPlotHybridFilter("all");
-                                setPlotStageFilter("all");
                               }}
                             >
                               Clear All
@@ -2373,14 +2317,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                         return false;
                       }
 
-                      // Stage filter
-                      if (
-                        plotStageFilter !== "all" &&
-                        plotData?.stage !== plotStageFilter
-                      ) {
-                        return false;
-                      }
-
                       return true;
                     })
                     .map((plotData) => {
@@ -2409,18 +2345,30 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                               <div className="mt-2 grid grid-cols-2 gap-1 text-xs">
                                 <div className="bg-slate-50 rounded px-2 py-1">
                                   <p className="text-slate-400 text-[10px] mb-0.5">
-                                    Current Stage
+                                    Measured Acre
                                   </p>
                                   <p className="font-medium text-slate-700">
-                                    {plotData?.stage || "N/A"}
+                                    {plotData?.acreage || "N/A"}
                                   </p>
                                 </div>
-                                <div className="bg-amber-50 rounded px-2 py-1">
-                                  <p className="text-amber-500 text-[10px] mb-0.5">
-                                    Expected Stage
+                                <div className="bg-blue-50 rounded px-2 py-1">
+                                  <p className="text-blue-500 text-[10px] mb-0.5">
+                                    DAS
                                   </p>
-                                  <p className="font-medium text-amber-700">
-                                    {plotData?.expectedStage || "N/A"}
+                                  <p className="font-medium text-blue-700">
+                                    {(() => {
+                                      if (!plotData?.sowingDate) return "N/A";
+                                      const sowingDate = new Date(
+                                        plotData.sowingDate,
+                                      );
+                                      const today = new Date();
+                                      const das = Math.floor(
+                                        (today.getTime() -
+                                          sowingDate.getTime()) /
+                                          (1000 * 60 * 60 * 24),
+                                      );
+                                      return das >= 0 ? das : "N/A";
+                                    })()}
                                   </p>
                                 </div>
                               </div>
@@ -2446,15 +2394,22 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                className="flex items-center gap-1.5 bg-[#4CAF50] hover:bg-[#388E3C] text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
-                onClick={() => {
-                  setIsAddGrowerOpen(true);
-                }}
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                Add New Grower
-              </button>
+              {role === "FDO" && (
+                <button
+                  className="flex items-center gap-1.5 bg-[#4CAF50] hover:bg-[#388E3C] text-white text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+                  onClick={() => {
+                    setIsAddGrowerOpen(true);
+                  }}
+                >
+                  <UserPlus className="h-3.5 w-3.5" />
+                  Add New Grower
+                </button>
+              )}
+              {role !== "FDO" && (
+                <div className="text-xs text-slate-500 px-3 py-2">
+                  Only FDO can add growers on mobile
+                </div>
+              )}
             </div>
             <Dialog
               open={isAddGrowerOpen}
@@ -2615,29 +2570,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
 
                     <Separator />
 
-                    {/* Block Filter */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Block</Label>
-                      <Select
-                        value={filters.block}
-                        onValueChange={(v) =>
-                          setFilters({ ...filters, block: v })
-                        }
-                      >
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="All Blocks" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Blocks</SelectItem>
-                          <SelectItem value="block-1">Block 1</SelectItem>
-                          <SelectItem value="block-2">Block 2</SelectItem>
-                          <SelectItem value="block-3">Block 3</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Separator />
-
                     {/* Village Filter */}
                     <div className="space-y-2">
                       <Label className="text-sm font-medium">Village</Label>
@@ -2705,7 +2637,6 @@ export function Growers({ selectedRegion = "all" }: GrowersProps = {}) {
                 onClick={() => {
                   setSelectedGrower(grower);
                   setPlotHybridFilter("all");
-                  setPlotStageFilter("all");
                   setPlotSearchQuery("");
                 }}
                 className={`cursor-pointer transition-all active:scale-[0.98] ${selectedGrower?.id === grower.id ? "border-[#10B981] ring-2 ring-[#10B981]/20 bg-green-50/50" : ""}`}
