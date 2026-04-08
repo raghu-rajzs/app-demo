@@ -546,6 +546,7 @@ export function Growers({
 
   // Handle edit grower
   const handleEditGrower = (grower: Grower) => {
+    setSelectedGrower(null);
     setEditingGrowerId(grower.id);
     setFormData({
       preferredName: grower.name,
@@ -627,7 +628,14 @@ export function Growers({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    const grower = MOCK_GROWERS.find(
+                      (g) => g.id === selectedPlot.growerId,
+                    );
+                    if (grower) handleEditGrower(grower);
+                  }}
+                >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
