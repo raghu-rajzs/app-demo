@@ -197,6 +197,8 @@ export function Dispatch() {
     useState(false);
   const [pendingDeleteFieldRowId, setPendingDeleteFieldRowId] =
     useState<string>("");
+  const [isDeleteEntityConfirmOpen, setIsDeleteEntityConfirmOpen] =
+    useState(false);
 
   const [isEditingDetailsTransport, setIsEditingDetailsTransport] =
     useState(false);
@@ -391,6 +393,7 @@ export function Dispatch() {
     opts?: {
       initialTab?: "transport" | "field";
       focusRowId?: string;
+      addNewRow?: boolean;
     },
   ) => {
     const entity = dispatchEntities.find(
@@ -407,8 +410,9 @@ export function Dispatch() {
       productLocation: entity.productLocation ?? "",
       dispatchTime: entity.dispatchTime ?? "",
     });
-    setNewEntityFieldRows(
-      entity.rows.map((row: FieldQuantityRow) => ({
+
+    const mappedRows: NewEntityFieldRow[] = entity.rows.map(
+      (row: FieldQuantityRow) => ({
         id: row.id,
         fieldNumber: row.fieldNumber,
         quantity: row.quantity,
@@ -416,10 +420,29 @@ export function Dispatch() {
         harvest: row.harvest ?? "",
         moisture: row.moisture ?? "",
         bags: row.bags ?? "",
-      })),
+      }),
     );
+
+    let newRowId: string | undefined;
+    if (opts?.addNewRow) {
+      newRowId = `row-${Date.now()}`;
+      mappedRows.unshift({
+        id: newRowId,
+        fieldNumber: "",
+        quantity: "",
+        partFull: "",
+        harvest: "",
+        moisture: "",
+        bags: "",
+      });
+    }
+
+    setNewEntityFieldRows(mappedRows);
+
     if (opts?.focusRowId) {
       setExpandedFieldRowId(opts.focusRowId);
+    } else if (newRowId) {
+      setExpandedFieldRowId(newRowId);
     } else {
       setExpandedFieldRowId(entity.rows.length > 0 ? entity.rows[0].id : "");
     }
@@ -710,44 +733,50 @@ export function Dispatch() {
               }) => (
                 <Card
                   key={entity.id}
-                  className="overflow-hidden cursor-pointer"
+                  className="overflow-hidden cursor-pointer active:scale-[0.99] transition-transform"
                   onClick={() => handleOpenDetails(entity.id)}
                 >
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-3">
+                  <CardContent className="p-3">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
-                        <div className="text-xs text-slate-500">
-                          DISPATCH ID
+                        <div className="mb-2">
+                          <div className="text-[10px] text-slate-400 uppercase tracking-wide">
+                            Dispatch ID
+                          </div>
+                          <div className="text-sm font-bold text-slate-900 truncate">
+                            {entity.id}
+                          </div>
                         </div>
-                        <div className="text-sm font-bold text-slate-900 truncate">
-                          {entity.id}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mt-3">
+                        <div className="flex items-center gap-4">
                           <div>
-                            <div className="text-xs text-slate-500">
-                              TRUCK NO.
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wide">
+                              Truck
                             </div>
-                            <div className="text-sm font-medium text-slate-900">
+                            <div className="text-sm font-semibold text-slate-900 leading-tight">
                               {entity.truckNumber}
                             </div>
                           </div>
+                          <div className="w-px h-8 bg-slate-200" />
                           <div>
-                            <div className="text-xs text-slate-500">LR NO.</div>
-                            <div className="text-sm font-medium text-slate-900">
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wide">
+                              LR No.
+                            </div>
+                            <div className="text-sm font-semibold text-slate-900 leading-tight">
                               {entity.lrNumber}
                             </div>
                           </div>
+                          <div className="w-px h-8 bg-slate-200" />
                           <div>
-                            <div className="text-xs text-slate-500">
-                              TOTAL QTY.
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wide">
+                              Qty
                             </div>
-                            <div className="text-sm font-medium text-slate-900">
+                            <div className="text-sm font-semibold text-slate-900 leading-tight">
                               {totalQty} kg
                             </div>
                           </div>
                         </div>
                       </div>
+                      <ChevronDown className="h-4 w-4 text-slate-400 -rotate-90 shrink-0" />
                     </div>
                   </CardContent>
                 </Card>
@@ -798,11 +827,22 @@ export function Dispatch() {
           <div className="flex-1 overflow-y-auto p-3 pb-5 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {viewingEntity && (
               <>
-                <div className="space-y-1">
-                  <div className="text-xs text-slate-500">DISPATCH ID</div>
-                  <div className="text-sm font-bold text-slate-900">
-                    {viewingEntity.id}
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <div className="text-xs text-slate-500">DISPATCH ID</div>
+                    <div className="text-sm font-bold text-slate-900">
+                      {viewingEntity.id}
+                    </div>
                   </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => setIsDeleteEntityConfirmOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
 
                 <Card className="overflow-hidden">
@@ -874,17 +914,8 @@ export function Dispatch() {
                           size="icon"
                           className="h-8 w-8"
                           onClick={() => {
-                            setIsEditingDetailsTransport(true);
-                            setDetailsTransportDraft({
-                              vendor: viewingEntity.vendor ?? "",
-                              truckNumber: viewingEntity.truckNumber ?? "",
-                              lrNumber: viewingEntity.lrNumber ?? "",
-                              maxFreight: viewingEntity.maxFreight ?? "",
-                              productLocation:
-                                viewingEntity.productLocation ?? "",
-                              dispatchTime: toDateTimeLocalValue(
-                                viewingEntity.dispatchTime ?? "",
-                              ),
+                            handleModifyDispatchEntity(viewingEntity.id, {
+                              initialTab: "transport",
                             });
                           }}
                         >
@@ -1074,17 +1105,12 @@ export function Dispatch() {
                         size="sm"
                         className="h-8 gap-1"
                         onClick={() => {
-                          setEditingDetailsFieldRowId("");
-                          setIsAddingDetailsFieldRow(true);
-                          setDetailsNewFieldRowDraft({
-                            fieldNumber: "",
-                            quantity: "",
-                            partFull: "",
-                            harvest: toDateValue(""),
-                            moisture: "",
-                            bags: "",
-                          });
-                          setDetailsNewFieldRowErrors({});
+                          if (viewingEntity) {
+                            handleModifyDispatchEntity(viewingEntity.id, {
+                              initialTab: "field",
+                              addNewRow: true,
+                            });
+                          }
                         }}
                       >
                         <Plus className="h-4 w-4" />
@@ -1355,338 +1381,336 @@ export function Dispatch() {
                     )}
 
                     <div className="space-y-2">
-                      {viewingEntity.rows.map((row: FieldQuantityRow) => {
-                        const isExpanded = detailsExpandedRowIds.includes(
-                          row.id,
-                        );
-                        return (
-                          <Card key={row.id} className="overflow-hidden">
-                            <div
-                              className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between cursor-pointer"
-                              onClick={() =>
-                                setDetailsExpandedRowIds((prev: string[]) =>
-                                  prev.includes(row.id)
-                                    ? prev.filter((id: string) => id !== row.id)
-                                    : [...prev, row.id],
-                                )
-                              }
-                            >
-                              <div className="min-w-0">
-                                <div className="text-xs text-slate-500">
-                                  FIELD
-                                </div>
-                                <div className="text-sm font-medium text-slate-900 truncate">
-                                  {row.fieldNumber || "-"}
-                                </div>
-                              </div>
-
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={(
-                                    e: React.MouseEvent<HTMLButtonElement>,
-                                  ) => {
-                                    e.stopPropagation();
-                                    setEditingDetailsFieldRowId(row.id);
-                                    setDetailsFieldRowDraft({
-                                      fieldNumber: row.fieldNumber ?? "",
-                                      quantity: row.quantity ?? "",
-                                      partFull: row.partFull ?? "",
-                                      harvest: toDateValue(row.harvest ?? ""),
-                                      moisture: row.moisture ?? "",
-                                      bags: row.bags ?? "",
-                                    });
-                                    if (
-                                      !detailsExpandedRowIds.includes(row.id)
-                                    ) {
-                                      setDetailsExpandedRowIds([
-                                        ...detailsExpandedRowIds,
-                                        row.id,
-                                      ]);
-                                    }
-                                  }}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={(
-                                    e: React.MouseEvent<HTMLButtonElement>,
-                                  ) => {
-                                    e.stopPropagation();
-                                    setPendingDeleteFieldRowId(row.id);
-                                    setIsDeleteFieldConfirmOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                                <ChevronDown
-                                  className={`h-4 w-4 text-slate-500 transition-transform ${
-                                    isExpanded ? "rotate-180" : ""
-                                  }`}
-                                />
-                              </div>
-                            </div>
-
-                            {isExpanded && (
-                              <CardContent className="px-4 pt-2 pb-4">
-                                {editingDetailsFieldRowId === row.id && (
-                                  <div className="flex justify-end gap-2 mb-3">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-8"
-                                      onClick={() => {
-                                        setEditingDetailsFieldRowId("");
-                                        setDetailsFieldRowDraft({
-                                          fieldNumber: "",
-                                          quantity: "",
-                                          partFull: "",
-                                          harvest: "",
-                                          moisture: "",
-                                          bags: "",
-                                        });
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      size="sm"
-                                      className="h-8 bg-[#4CAF50] hover:bg-[#388E3C] text-white"
-                                      onClick={() => {
-                                        setDispatchEntities(
-                                          dispatchEntities.map(
-                                            (entity: DispatchEntity) =>
-                                              entity.id === viewingEntity.id
-                                                ? {
-                                                    ...entity,
-                                                    rows: entity.rows.map(
-                                                      (r: FieldQuantityRow) =>
-                                                        r.id === row.id
-                                                          ? {
-                                                              ...r,
-                                                              fieldNumber:
-                                                                detailsFieldRowDraft.fieldNumber,
-                                                              quantity:
-                                                                detailsFieldRowDraft.quantity,
-                                                              partFull:
-                                                                detailsFieldRowDraft.partFull,
-                                                              harvest:
-                                                                detailsFieldRowDraft.harvest,
-                                                              moisture:
-                                                                detailsFieldRowDraft.moisture,
-                                                              bags: detailsFieldRowDraft.bags,
-                                                            }
-                                                          : r,
-                                                    ),
-                                                  }
-                                                : entity,
-                                          ),
-                                        );
-                                        setEditingDetailsFieldRowId("");
-                                      }}
-                                    >
-                                      Update
-                                    </Button>
+                      {[...viewingEntity.rows]
+                        .reverse()
+                        .map((row: FieldQuantityRow) => {
+                          const isExpanded = detailsExpandedRowIds.includes(
+                            row.id,
+                          );
+                          return (
+                            <Card key={row.id} className="overflow-hidden">
+                              <div
+                                className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between cursor-pointer"
+                                onClick={() =>
+                                  setDetailsExpandedRowIds((prev: string[]) =>
+                                    prev.includes(row.id)
+                                      ? prev.filter(
+                                          (id: string) => id !== row.id,
+                                        )
+                                      : [...prev, row.id],
+                                  )
+                                }
+                              >
+                                <div className="min-w-0">
+                                  <div className="text-xs text-slate-500">
+                                    FIELD
                                   </div>
-                                )}
+                                  <div className="text-sm font-medium text-slate-900 truncate">
+                                    {row.fieldNumber || "-"}
+                                  </div>
+                                </div>
 
-                                <div className="grid grid-cols-2 gap-3">
-                                  <div>
-                                    <div className="text-xs text-slate-500">
-                                      FIELD NO.
-                                    </div>
-                                    {editingDetailsFieldRowId === row.id ? (
-                                      <Select
-                                        value={detailsFieldRowDraft.fieldNumber}
-                                        onValueChange={(value: string) =>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(
+                                      e: React.MouseEvent<HTMLButtonElement>,
+                                    ) => {
+                                      e.stopPropagation();
+                                      handleModifyDispatchEntity(
+                                        viewingEntity.id,
+                                        {
+                                          initialTab: "field",
+                                          focusRowId: row.id,
+                                        },
+                                      );
+                                    }}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                    onClick={(
+                                      e: React.MouseEvent<HTMLButtonElement>,
+                                    ) => {
+                                      e.stopPropagation();
+                                      setPendingDeleteFieldRowId(row.id);
+                                      setIsDeleteFieldConfirmOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                  <ChevronDown
+                                    className={`h-4 w-4 text-slate-500 transition-transform ${
+                                      isExpanded ? "rotate-180" : ""
+                                    }`}
+                                  />
+                                </div>
+                              </div>
+
+                              {isExpanded && (
+                                <CardContent className="px-4 pt-2 pb-4">
+                                  {editingDetailsFieldRowId === row.id && (
+                                    <div className="flex justify-end gap-2 mb-3">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8"
+                                        onClick={() => {
+                                          setEditingDetailsFieldRowId("");
                                           setDetailsFieldRowDraft({
-                                            ...detailsFieldRowDraft,
-                                            fieldNumber: value,
-                                          })
-                                        }
+                                            fieldNumber: "",
+                                            quantity: "",
+                                            partFull: "",
+                                            harvest: "",
+                                            moisture: "",
+                                            bags: "",
+                                          });
+                                        }}
                                       >
-                                        <SelectTrigger className="h-10 text-sm">
-                                          <SelectValue placeholder="Select" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          {fieldNumberOptions.map(
-                                            (option: string) => (
-                                              <SelectItem
-                                                key={option}
-                                                value={option}
-                                              >
-                                                {option}
-                                              </SelectItem>
+                                        Cancel
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        className="h-8 bg-[#4CAF50] hover:bg-[#388E3C] text-white"
+                                        onClick={() => {
+                                          setDispatchEntities(
+                                            dispatchEntities.map(
+                                              (entity: DispatchEntity) =>
+                                                entity.id === viewingEntity.id
+                                                  ? {
+                                                      ...entity,
+                                                      rows: entity.rows.map(
+                                                        (
+                                                          r: FieldQuantityRow,
+                                                        ) =>
+                                                          r.id === row.id
+                                                            ? {
+                                                                ...r,
+                                                                fieldNumber:
+                                                                  detailsFieldRowDraft.fieldNumber,
+                                                                quantity:
+                                                                  detailsFieldRowDraft.quantity,
+                                                                partFull:
+                                                                  detailsFieldRowDraft.partFull,
+                                                                harvest:
+                                                                  detailsFieldRowDraft.harvest,
+                                                                moisture:
+                                                                  detailsFieldRowDraft.moisture,
+                                                                bags: detailsFieldRowDraft.bags,
+                                                              }
+                                                            : r,
+                                                      ),
+                                                    }
+                                                  : entity,
                                             ),
-                                          )}
-                                        </SelectContent>
-                                      </Select>
-                                    ) : (
-                                      <div className="text-sm font-medium text-slate-900">
-                                        {row.fieldNumber || "-"}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-slate-500">
-                                      QTY.
-                                    </div>
-                                    {editingDetailsFieldRowId === row.id ? (
-                                      <Input
-                                        type="number"
-                                        className="h-10 text-sm"
-                                        value={detailsFieldRowDraft.quantity}
-                                        onChange={(
-                                          e: React.ChangeEvent<HTMLInputElement>,
-                                        ) =>
-                                          setDetailsFieldRowDraft({
-                                            ...detailsFieldRowDraft,
-                                            quantity: e.target.value,
-                                          })
-                                        }
-                                      />
-                                    ) : (
-                                      <div className="text-sm font-medium text-slate-900">
-                                        {row.quantity || "-"}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-slate-500">
-                                      PART/FULL
-                                    </div>
-                                    {editingDetailsFieldRowId === row.id ? (
-                                      <Select
-                                        value={detailsFieldRowDraft.partFull}
-                                        onValueChange={(value: string) =>
-                                          setDetailsFieldRowDraft({
-                                            ...detailsFieldRowDraft,
-                                            partFull: value,
-                                          })
-                                        }
+                                          );
+                                          setEditingDetailsFieldRowId("");
+                                        }}
                                       >
-                                        <SelectTrigger className="h-10 text-sm">
-                                          <SelectValue placeholder="Select" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="Part">
-                                            Part
-                                          </SelectItem>
-                                          <SelectItem value="Full">
-                                            Full
-                                          </SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    ) : (
-                                      <div className="text-sm font-medium text-slate-900">
-                                        {row.partFull || "-"}
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-slate-500">
-                                      HARVEST
+                                        Update
+                                      </Button>
                                     </div>
-                                    {editingDetailsFieldRowId === row.id ? (
-                                      <Input
-                                        type="date"
-                                        className="h-10 text-sm pr-10 bg-white text-slate-900 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-1"
-                                        value={detailsFieldRowDraft.harvest}
-                                        onClick={(
-                                          e: React.MouseEvent<HTMLInputElement>,
-                                        ) => {
-                                          const el =
-                                            e.currentTarget as unknown as {
-                                              showPicker?: () => void;
-                                            };
-                                          el.showPicker?.();
-                                        }}
-                                        onFocus={(
-                                          e: React.FocusEvent<HTMLInputElement>,
-                                        ) => {
-                                          const el =
-                                            e.currentTarget as unknown as {
-                                              showPicker?: () => void;
-                                            };
-                                          el.showPicker?.();
-                                        }}
-                                        onChange={(
-                                          e: React.ChangeEvent<HTMLInputElement>,
-                                        ) =>
-                                          setDetailsFieldRowDraft({
-                                            ...detailsFieldRowDraft,
-                                            harvest: e.target.value,
-                                          })
-                                        }
-                                      />
-                                    ) : (
-                                      <div className="text-sm font-medium text-slate-900">
-                                        {formatHarvestDate(row.harvest ?? "")}
+                                  )}
+
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        FIELD NO.
                                       </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-slate-500">
-                                      MOISTURE
+                                      {editingDetailsFieldRowId === row.id ? (
+                                        <Select
+                                          value={
+                                            detailsFieldRowDraft.fieldNumber
+                                          }
+                                          onValueChange={(value: string) =>
+                                            setDetailsFieldRowDraft({
+                                              ...detailsFieldRowDraft,
+                                              fieldNumber: value,
+                                            })
+                                          }
+                                        >
+                                          <SelectTrigger className="h-10 text-sm">
+                                            <SelectValue placeholder="Select" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {fieldNumberOptions.map(
+                                              (option: string) => (
+                                                <SelectItem
+                                                  key={option}
+                                                  value={option}
+                                                >
+                                                  {option}
+                                                </SelectItem>
+                                              ),
+                                            )}
+                                          </SelectContent>
+                                        </Select>
+                                      ) : (
+                                        <div className="text-sm font-medium text-slate-900">
+                                          {row.fieldNumber || "-"}
+                                        </div>
+                                      )}
                                     </div>
-                                    {editingDetailsFieldRowId === row.id ? (
-                                      <Input
-                                        className="h-10 text-sm"
-                                        value={detailsFieldRowDraft.moisture}
-                                        onChange={(
-                                          e: React.ChangeEvent<HTMLInputElement>,
-                                        ) =>
-                                          setDetailsFieldRowDraft({
-                                            ...detailsFieldRowDraft,
-                                            moisture: e.target.value,
-                                          })
-                                        }
-                                      />
-                                    ) : (
-                                      <div className="text-sm font-medium text-slate-900">
-                                        {row.moisture || "-"}
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        QTY.
                                       </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <div className="text-xs text-slate-500">
-                                      BAGS
+                                      {editingDetailsFieldRowId === row.id ? (
+                                        <Input
+                                          type="number"
+                                          className="h-10 text-sm"
+                                          value={detailsFieldRowDraft.quantity}
+                                          onChange={(
+                                            e: React.ChangeEvent<HTMLInputElement>,
+                                          ) =>
+                                            setDetailsFieldRowDraft({
+                                              ...detailsFieldRowDraft,
+                                              quantity: e.target.value,
+                                            })
+                                          }
+                                        />
+                                      ) : (
+                                        <div className="text-sm font-medium text-slate-900">
+                                          {row.quantity || "-"}
+                                        </div>
+                                      )}
                                     </div>
-                                    {editingDetailsFieldRowId === row.id ? (
-                                      <Input
-                                        type="number"
-                                        className="h-10 text-sm"
-                                        value={detailsFieldRowDraft.bags}
-                                        onChange={(
-                                          e: React.ChangeEvent<HTMLInputElement>,
-                                        ) =>
-                                          setDetailsFieldRowDraft({
-                                            ...detailsFieldRowDraft,
-                                            bags: e.target.value,
-                                          })
-                                        }
-                                      />
-                                    ) : (
-                                      <div className="text-sm font-medium text-slate-900">
-                                        {row.bags || "-"}
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        PART/FULL
                                       </div>
-                                    )}
+                                      {editingDetailsFieldRowId === row.id ? (
+                                        <Select
+                                          value={detailsFieldRowDraft.partFull}
+                                          onValueChange={(value: string) =>
+                                            setDetailsFieldRowDraft({
+                                              ...detailsFieldRowDraft,
+                                              partFull: value,
+                                            })
+                                          }
+                                        >
+                                          <SelectTrigger className="h-10 text-sm">
+                                            <SelectValue placeholder="Select" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="Part">
+                                              Part
+                                            </SelectItem>
+                                            <SelectItem value="Full">
+                                              Full
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      ) : (
+                                        <div className="text-sm font-medium text-slate-900">
+                                          {row.partFull || "-"}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        HARVEST
+                                      </div>
+                                      {editingDetailsFieldRowId === row.id ? (
+                                        <Input
+                                          type="date"
+                                          className="h-10 text-sm pr-10 bg-white text-slate-900 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:p-1"
+                                          value={detailsFieldRowDraft.harvest}
+                                          onClick={(
+                                            e: React.MouseEvent<HTMLInputElement>,
+                                          ) => {
+                                            const el =
+                                              e.currentTarget as unknown as {
+                                                showPicker?: () => void;
+                                              };
+                                            el.showPicker?.();
+                                          }}
+                                          onFocus={(
+                                            e: React.FocusEvent<HTMLInputElement>,
+                                          ) => {
+                                            const el =
+                                              e.currentTarget as unknown as {
+                                                showPicker?: () => void;
+                                              };
+                                            el.showPicker?.();
+                                          }}
+                                          onChange={(
+                                            e: React.ChangeEvent<HTMLInputElement>,
+                                          ) =>
+                                            setDetailsFieldRowDraft({
+                                              ...detailsFieldRowDraft,
+                                              harvest: e.target.value,
+                                            })
+                                          }
+                                        />
+                                      ) : (
+                                        <div className="text-sm font-medium text-slate-900">
+                                          {formatHarvestDate(row.harvest ?? "")}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        MOISTURE
+                                      </div>
+                                      {editingDetailsFieldRowId === row.id ? (
+                                        <Input
+                                          className="h-10 text-sm"
+                                          value={detailsFieldRowDraft.moisture}
+                                          onChange={(
+                                            e: React.ChangeEvent<HTMLInputElement>,
+                                          ) =>
+                                            setDetailsFieldRowDraft({
+                                              ...detailsFieldRowDraft,
+                                              moisture: e.target.value,
+                                            })
+                                          }
+                                        />
+                                      ) : (
+                                        <div className="text-sm font-medium text-slate-900">
+                                          {row.moisture || "-"}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div>
+                                      <div className="text-xs text-slate-500">
+                                        BAGS
+                                      </div>
+                                      {editingDetailsFieldRowId === row.id ? (
+                                        <Input
+                                          type="number"
+                                          className="h-10 text-sm"
+                                          value={detailsFieldRowDraft.bags}
+                                          onChange={(
+                                            e: React.ChangeEvent<HTMLInputElement>,
+                                          ) =>
+                                            setDetailsFieldRowDraft({
+                                              ...detailsFieldRowDraft,
+                                              bags: e.target.value,
+                                            })
+                                          }
+                                        />
+                                      ) : (
+                                        <div className="text-sm font-medium text-slate-900">
+                                          {row.bags || "-"}
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
-                                </div>
-                              </CardContent>
-                            )}
-                          </Card>
-                        );
-                      })}
+                                </CardContent>
+                              )}
+                            </Card>
+                          );
+                        })}
                     </div>
 
                     {/* <div className="pt-2 border-t">
@@ -1759,6 +1783,48 @@ export function Dispatch() {
                 }
                 setIsDeleteCreateFieldConfirmOpen(false);
                 setPendingDeleteCreateFieldRowId("");
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isDeleteEntityConfirmOpen}
+        onOpenChange={(open: boolean) => {
+          setIsDeleteEntityConfirmOpen(open);
+        }}
+      >
+        <DialogContent
+          overlayClassName="z-[60]"
+          className="w-[calc(90%-1rem)] max-w-sm z-[60]"
+        >
+          <DialogHeader>
+            <DialogTitle className="text-base">Delete Dispatch</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this dispatch entity? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteEntityConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={() => {
+                if (!viewingEntityId) return;
+                handleDeleteEntity(viewingEntityId);
+                setIsDeleteEntityConfirmOpen(false);
+                setIsDetailsDialogOpen(false);
+                setViewingEntityId("");
               }}
             >
               Delete
