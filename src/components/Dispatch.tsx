@@ -776,9 +776,9 @@ export function Dispatch() {
       >
         <DialogContent
           hideCloseButton
-          className="max-w-full h-full m-0 rounded-none p-0 flex flex-col"
+          className="max-w-full h-full m-0 rounded-none p-0 flex flex-col gap-0"
         >
-          <div className="px-4 py-3 border-b bg-[rgb(76,175,80)] text-white flex items-center gap-3 flex-shrink-0">
+          <div className="px-2 py-3 border-b bg-[rgb(76,175,80)] text-white flex items-center gap-2 flex-shrink-0">
             <Button
               type="button"
               variant="ghost"
@@ -795,10 +795,10 @@ export function Dispatch() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-3 pb-5 space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div className="flex-1 overflow-y-auto p-3 pb-5 space-y-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {viewingEntity && (
               <>
-                <div className="space-y-1">
+                <div>
                   <div className="text-xs text-slate-500">DISPATCH ID</div>
                   <div className="text-sm font-bold text-slate-900">
                     {viewingEntity.id}
@@ -1051,7 +1051,7 @@ export function Dispatch() {
                       </div>
                     </div>
 
-                    <div className="space-y-1">
+                    <div>
                       {/* <div className="pt-2 border-t"> */}
                       <div className="text-xs text-slate-500">TOTAL QTY.</div>
                       <div className="text-sm font-bold text-slate-900">
@@ -1360,7 +1360,7 @@ export function Dispatch() {
                           row.id,
                         );
                         return (
-                          <Card key={row.id} className="overflow-hidden">
+                          <Card key={row.id} className="overflow-hidden gap-2">
                             <div
                               className="px-4 py-3 bg-slate-50 border-b flex items-center justify-between cursor-pointer"
                               onClick={() =>
@@ -1435,7 +1435,7 @@ export function Dispatch() {
                             </div>
 
                             {isExpanded && (
-                              <CardContent className="px-4 pt-2 pb-4">
+                              <CardContent className="px-4 pt-1 pb-4">
                                 {editingDetailsFieldRowId === row.id && (
                                   <div className="flex justify-end gap-2 mb-3">
                                     <Button
