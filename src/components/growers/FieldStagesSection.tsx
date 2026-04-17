@@ -2,6 +2,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
 import {
   Select,
   SelectContent,
@@ -10,11 +11,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Checkbox } from "../ui/checkbox";
-import {
-  Map as MapIcon,
-  CheckCircle2,
-  Sprout,
-} from "lucide-react";
+import { Map as MapIcon, CheckCircle2, Sprout, Camera } from "lucide-react";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { Plot } from "../data/mockData";
 import { CORN_FIELD_STAGES, RICE_FIELD_STAGES } from "./config/fieldStages";
@@ -925,31 +922,387 @@ export function FieldStagesSection({
           </div>
         )}
 
-        {/* ── Quality, Pre-Harvest, Harvest, Dispatch, CCP (Corn) ── */}
-        {["quality", "pre-harvest", "harvest", "dispatch", "ccp"].includes(
-          activeFieldStage,
-        ) && selectedPlot.crop !== "Rice" && (
+        {/* ── Quality ── */}
+        {activeFieldStage === "quality" && selectedPlot.crop !== "Rice" && (
           <div className="space-y-4 pt-2 border-t">
-            <div className="flex flex-col items-center justify-center py-8 text-center gap-3">
+            <div className="flex flex-col items-center justify-center py-4 text-center gap-3">
               <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center">
                 <Sprout className="h-6 w-6 text-slate-400" />
               </div>
               <div>
                 <p className="text-sm font-semibold text-slate-700">
-                  {activeFieldStage === "quality"
-                    ? "Quality Stage"
-                    : activeFieldStage === "pre-harvest"
-                      ? "Pre-Harvest Stage"
-                      : activeFieldStage === "harvest"
-                        ? "Harvest Stage"
-                        : activeFieldStage === "dispatch"
-                          ? "Dispatch Stage"
-                          : "CCP Stage"}
+                  Quality Stage
                 </p>
                 <p className="text-xs text-slate-500 mt-1">
-                  Detailed fields available in full PlotTracker view
+                  Detailed quality capture fields coming soon.
                 </p>
               </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Notes</Label>
+              <Textarea
+                placeholder="Add any quality notes..."
+                rows={3}
+                value={fieldStageData.quality.notes}
+                onChange={(e) =>
+                  updateStageField("quality", "notes", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Add Media</Label>
+              <Button variant="outline" className="w-full gap-2">
+                <Camera className="h-4 w-4" />
+                Upload Photo/Video
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Pre-Harvest ── */}
+        {activeFieldStage === "pre-harvest" && selectedPlot.crop !== "Rice" && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Male Destruction</Label>
+              <div className="flex gap-2">
+                {["yes", "no"].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() =>
+                      updateStageField("preHarvest", "maleDestruction", opt)
+                    }
+                    className={`flex-1 py-2 rounded-md border text-sm font-medium capitalize transition-colors ${fieldStageData.preHarvest.maleDestruction === opt ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Disease Intensity</Label>
+                <Select
+                  value={fieldStageData.preHarvest.diseaseIntensity}
+                  onValueChange={(v) =>
+                    updateStageField("preHarvest", "diseaseIntensity", v)
+                  }
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Disease Name</Label>
+                <Select
+                  value={fieldStageData.preHarvest.diseaseName}
+                  onValueChange={(v) =>
+                    updateStageField("preHarvest", "diseaseName", v)
+                  }
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="blight">Blight</SelectItem>
+                    <SelectItem value="rust">Rust</SelectItem>
+                    <SelectItem value="smut">Smut</SelectItem>
+                    <SelectItem value="rot">Root Rot</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Crop Health</Label>
+                <Select
+                  value={fieldStageData.preHarvest.cropHealth}
+                  onValueChange={(v) =>
+                    updateStageField("preHarvest", "cropHealth", v)
+                  }
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="excellent">Excellent</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="average">Average</SelectItem>
+                    <SelectItem value="poor">Poor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Field Problem</Label>
+                <Select
+                  value={fieldStageData.preHarvest.fieldProblem}
+                  onValueChange={(v) =>
+                    updateStageField("preHarvest", "fieldProblem", v)
+                  }
+                >
+                  <SelectTrigger className="h-9 text-sm">
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="waterlog">Waterlogging</SelectItem>
+                    <SelectItem value="pest">Pest Attack</SelectItem>
+                    <SelectItem value="weed">Weed Pressure</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Pre-Harvest Cut Moisture (%)</Label>
+              <Input
+                className="h-9 text-sm"
+                type="number"
+                placeholder="0.0"
+                value={fieldStageData.preHarvest.preHarvestCutMoisture}
+                onChange={(e) =>
+                  updateStageField(
+                    "preHarvest",
+                    "preHarvestCutMoisture",
+                    e.target.value,
+                  )
+                }
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Standing Acre</Label>
+                <Input
+                  className="h-9 text-sm"
+                  type="number"
+                  placeholder="0.0"
+                  value={fieldStageData.preHarvest.standingAcre}
+                  onChange={(e) =>
+                    updateStageField(
+                      "preHarvest",
+                      "standingAcre",
+                      e.target.value,
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Estimated Yield (Kg)</Label>
+                <Input
+                  className="h-9 text-sm"
+                  type="number"
+                  placeholder="0"
+                  value={fieldStageData.preHarvest.estimatedYield}
+                  onChange={(e) =>
+                    updateStageField(
+                      "preHarvest",
+                      "estimatedYield",
+                      e.target.value,
+                    )
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Estimated Yield — Final (Kg)</Label>
+              <Input
+                className="h-9 text-sm"
+                type="number"
+                placeholder="0"
+                value={fieldStageData.preHarvest.estimatedYieldFinal}
+                onChange={(e) =>
+                  updateStageField(
+                    "preHarvest",
+                    "estimatedYieldFinal",
+                    e.target.value,
+                  )
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Add Media</Label>
+              <Button variant="outline" className="w-full gap-2">
+                <Camera className="h-4 w-4" />
+                Upload Photo/Video
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Harvest ── */}
+        {activeFieldStage === "harvest" && selectedPlot.crop !== "Rice" && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Male Date</Label>
+                <Input
+                  className="h-9 text-sm"
+                  type="date"
+                  value={fieldStageData.harvest.maleDate}
+                  onChange={(e) =>
+                    updateStageField("harvest", "maleDate", e.target.value)
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Female Date</Label>
+                <Input
+                  className="h-9 text-sm"
+                  type="date"
+                  value={fieldStageData.harvest.femaleDate}
+                  onChange={(e) =>
+                    updateStageField("harvest", "femaleDate", e.target.value)
+                  }
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Harvest Weight (Kg)</Label>
+              <Input
+                className="h-9 text-sm"
+                type="number"
+                placeholder="0"
+                value={fieldStageData.harvest.harvestWeight}
+                onChange={(e) =>
+                  updateStageField("harvest", "harvestWeight", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Field Final</Label>
+              <div className="flex gap-2">
+                {["yes", "no"].map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() =>
+                      updateStageField("harvest", "fieldFinal", opt)
+                    }
+                    className={`flex-1 py-2 rounded-md border text-sm font-medium capitalize transition-colors ${fieldStageData.harvest.fieldFinal === opt ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Add Media</Label>
+              <Button variant="outline" className="w-full gap-2">
+                <Camera className="h-4 w-4" />
+                Upload Photo/Video
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Dispatch (Corn) ── */}
+        {activeFieldStage === "dispatch" && selectedPlot.crop !== "Rice" && (
+          <div className="space-y-3 pt-2 border-t">
+            <div className="space-y-1.5">
+              <Label className="text-xs">LR Number</Label>
+              <Input
+                className="h-9 text-sm"
+                placeholder="Enter LR number"
+                value={fieldStageData.dispatch.lrNumber}
+                onChange={(e) =>
+                  updateStageField("dispatch", "lrNumber", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Truck Number</Label>
+              <Input
+                className="h-9 text-sm"
+                placeholder="Enter truck number"
+                value={fieldStageData.dispatch.truckNumber}
+                onChange={(e) =>
+                  updateStageField("dispatch", "truckNumber", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Dispatch Weight (Kg)</Label>
+              <Input
+                className="h-9 text-sm"
+                type="number"
+                placeholder="0"
+                value={fieldStageData.dispatch.dispatchWeight}
+                onChange={(e) =>
+                  updateStageField("dispatch", "dispatchWeight", e.target.value)
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Add Media</Label>
+              <Button variant="outline" className="w-full gap-2">
+                <Camera className="h-4 w-4" />
+                Upload Photo/Video
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* ── CCP ── */}
+        {activeFieldStage === "ccp" && selectedPlot.crop !== "Rice" && (
+          <div className="space-y-4 pt-2 border-t">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">
+                Child Care Protection (CCP)
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Confirm whether any child below the age of 18 was found working
+                on this field.
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">
+                Was any child found working on the field?
+              </Label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => updateStageField("ccp", "childWorking", "yes")}
+                  className={`flex-1 py-2 rounded-md border text-sm font-medium transition-colors ${fieldStageData.ccp.childWorking === "yes" ? "bg-red-500 text-white border-red-500" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                >
+                  Yes (Violation)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => updateStageField("ccp", "childWorking", "no")}
+                  className={`flex-1 py-2 rounded-md border text-sm font-medium transition-colors ${fieldStageData.ccp.childWorking === "no" ? "bg-[#4CAF50] text-white border-[#4CAF50]" : "bg-white text-slate-700 border-slate-300 hover:bg-slate-50"}`}
+                >
+                  No (Clear)
+                </button>
+              </div>
+              {fieldStageData.ccp.childWorking === "yes" && (
+                <div className="p-3 bg-red-50 rounded-md border border-red-200 mt-2">
+                  <p className="text-xs text-red-700 font-semibold">
+                    ⚠ Child labour violation detected. Report to your supervisor
+                    immediately.
+                  </p>
+                </div>
+              )}
+              {fieldStageData.ccp.childWorking === "no" && (
+                <div className="p-3 bg-green-50 rounded-md border border-green-200 mt-2">
+                  <p className="text-xs text-green-700 font-semibold">
+                    ✓ No child labour detected. Field is compliant.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label>Add Media</Label>
+              <Button variant="outline" className="w-full gap-2">
+                <Camera className="h-4 w-4" />
+                Upload Photo/Video
+              </Button>
             </div>
           </div>
         )}
@@ -1455,16 +1808,19 @@ export function FieldStagesSection({
                 <table className="w-full text-xs border border-slate-200 rounded-md overflow-hidden">
                   <thead className="bg-slate-50">
                     <tr>
-                      {["Date", "Off-type Male", "Off-type Female", "Remarks"].map(
-                        (h) => (
-                          <th
-                            key={h}
-                            className="px-2 py-1.5 text-left font-semibold text-slate-600 border-b border-slate-200"
-                          >
-                            {h}
-                          </th>
-                        ),
-                      )}
+                      {[
+                        "Date",
+                        "Off-type Male",
+                        "Off-type Female",
+                        "Remarks",
+                      ].map((h) => (
+                        <th
+                          key={h}
+                          className="px-2 py-1.5 text-left font-semibold text-slate-600 border-b border-slate-200"
+                        >
+                          {h}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
@@ -1493,7 +1849,11 @@ export function FieldStagesSection({
                   </tbody>
                 </table>
               </div>
-              <Button variant="outline" size="sm" className="w-full text-xs h-8">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs h-8"
+              >
                 + Add Row
               </Button>
             </div>
