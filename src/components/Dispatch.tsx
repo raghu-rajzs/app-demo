@@ -751,7 +751,7 @@ export function Dispatch() {
                             </div>
                           </div>
                           <div className="flex items-center gap-4">
-                            <div>
+                            <div className="flex-1">
                               <div className="text-[10px] text-slate-400 uppercase tracking-wide">
                                 Truck
                               </div>
@@ -760,7 +760,7 @@ export function Dispatch() {
                               </div>
                             </div>
                             <div className="w-px h-8 bg-slate-200" />
-                            <div>
+                            <div className="flex-1">
                               <div className="text-[10px] text-slate-400 uppercase tracking-wide">
                                 LR No.
                               </div>
@@ -769,7 +769,7 @@ export function Dispatch() {
                               </div>
                             </div>
                             <div className="w-px h-8 bg-slate-200" />
-                            <div>
+                            <div className="flex-1">
                               <div className="text-[10px] text-slate-400 uppercase tracking-wide">
                                 Qty
                               </div>
